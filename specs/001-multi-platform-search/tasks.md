@@ -29,9 +29,9 @@ This is a Next.js App Router web application:
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Install required dependencies: cheerio for HTML parsing, vitest and @testing-library/react for testing
-- [ ] T002 [P] Add missing shadcn/ui components: sheet, badge (if not already installed)
-- [ ] T003 [P] Create placeholder product image in public/placeholder-product.png
+- [X] T001 Install required dependencies: cheerio for HTML parsing, vitest and @testing-library/react for testing
+- [X] T002 [P] Add missing shadcn/ui components: sheet, badge (if not already installed)
+- [X] T003 [P] Create placeholder product image in public/placeholder-product.png
 
 ---
 
@@ -41,14 +41,14 @@ This is a Next.js App Router web application:
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T004 [P] Create core TypeScript interfaces in lib/platforms/types.ts (UnifiedProduct, PlatformType, SearchResult, AggregatedSearchResult, PlatformAdapter)
-- [ ] T005 [P] Create Alibaba-specific types in lib/platforms/alibaba/types.ts (AlibabaSearchResponse, AlibabaOffer)
-- [ ] T006 [P] Create Made-in-China-specific types in lib/platforms/madeinchina/types.ts (MICCompany, MICSearchResponse)
-- [ ] T007 [P] Implement Alibaba data mapper in lib/platforms/alibaba/mapper.ts (mapAlibabaToUnified function)
-- [ ] T008 [P] Implement Made-in-China data mapper in lib/platforms/madeinchina/mapper.ts (mapMICToUnified function)
-- [ ] T009 Implement Made-in-China HTML parser in lib/platforms/madeinchina/parser.ts (parseMICHTML function using cheerio)
-- [ ] T010 [P] Create Alibaba API proxy route in app/api/search/alibaba/route.ts (GET handler with fetch to Alibaba API)
-- [ ] T011 [P] Create Made-in-China API proxy route in app/api/search/madeinchina/route.ts (GET handler with HTML fetch and parsing)
+- [X] T004 [P] Create core TypeScript interfaces in lib/platforms/types.ts (UnifiedProduct, PlatformType, SearchResult, AggregatedSearchResult, PlatformAdapter)
+- [X] T005 [P] Create Alibaba-specific types in lib/platforms/alibaba/types.ts (AlibabaSearchResponse, AlibabaOffer)
+- [X] T006 [P] Create Made-in-China-specific types in lib/platforms/madeinchina/types.ts (MICCompany, MICSearchResponse)
+- [X] T007 [P] Implement Alibaba data mapper in lib/platforms/alibaba/mapper.ts (mapAlibabaToUnified function)
+- [X] T008 [P] Implement Made-in-China data mapper in lib/platforms/madeinchina/mapper.ts (mapMICToUnified function)
+- [X] T009 Implement Made-in-China HTML parser in lib/platforms/madeinchina/parser.ts (parseMICHTML function using cheerio)
+- [X] T010 [P] Create Alibaba API proxy route in app/api/search/alibaba/route.ts (GET handler with fetch to Alibaba API)
+- [X] T011 [P] Create Made-in-China API proxy route in app/api/search/madeinchina/route.ts (GET handler with HTML fetch and parsing)
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -62,14 +62,14 @@ This is a Next.js App Router web application:
 
 ### Implementation for User Story 1
 
-- [ ] T012 [P] [US1] Create SearchBar component in components/search/search-bar.tsx (input field + search button)
-- [ ] T013 [P] [US1] Create ProductCard component in components/search/product-card.tsx (displays product name, image, price, supplier, platform badge)
-- [ ] T014 [P] [US1] Create ProductGrid component in components/search/product-grid.tsx (grid layout of ProductCard components)
-- [ ] T015 [US1] Create search service in lib/search/search-service.ts (searchAllPlatforms function using Promise.all for parallel API calls)
-- [ ] T016 [US1] Create main search page in app/search/page.tsx (orchestrates SearchBar, ProductGrid, manages state)
-- [ ] T017 [US1] Add loading state UI to search page (loading spinner/skeleton while search executes)
-- [ ] T018 [US1] Add empty state UI to ProductGrid (message when no results found)
-- [ ] T019 [US1] Add error handling UI for partial failures (show results from working platforms, display error message for failed platforms)
+- [X] T012 [P] [US1] Create SearchBar component in components/search/search-bar.tsx (input field + search button)
+- [X] T013 [P] [US1] Create ProductCard component in components/search/product-card.tsx (displays product name, image, price, supplier, platform badge)
+- [X] T014 [P] [US1] Create ProductGrid component in components/search/product-grid.tsx (grid layout of ProductCard components)
+- [X] T015 [US1] Create search service in lib/search/search-service.ts (searchAllPlatforms function using Promise.all for parallel API calls)
+- [X] T016 [US1] Create main search page in app/search/page.tsx (orchestrates SearchBar, ProductGrid, manages state)
+- [X] T017 [US1] Add loading state UI to search page (loading spinner/skeleton while search executes)
+- [X] T018 [US1] Add empty state UI to ProductGrid (message when no results found)
+- [X] T019 [US1] Add error handling UI for partial failures (show results from working platforms, display error message for failed platforms)
 
 **Checkpoint**: At this point, User Story 1 should be fully functional - users can search and see unified results from both platforms
 
@@ -85,13 +85,13 @@ This is a Next.js App Router web application:
 
 ### Implementation for User Story 4
 
-- [ ] T020 [US4] Create ProductDetailSheet component in components/search/product-detail-sheet.tsx (Sheet component showing all product details)
-- [ ] T021 [US4] Add image gallery to ProductDetailSheet (display all product.images with carousel or grid)
-- [ ] T022 [US4] Add supplier information section to ProductDetailSheet (name, location, verification badges)
-- [ ] T023 [US4] Add platform-specific data section to ProductDetailSheet (conditionally render Alibaba metrics or Made-in-China data)
-- [ ] T024 [US4] Add link to source platform (button to open product.url in new tab)
-- [ ] T025 [US4] Integrate ProductDetailSheet into app/search/page.tsx (state management for selectedProduct, onProductClick handler)
-- [ ] T026 [US4] Add graceful handling for missing fields in ProductDetailSheet (hide sections with no data)
+- [X] T020 [US4] Create ProductDetailSheet component in components/search/product-detail-sheet.tsx (Sheet component showing all product details)
+- [X] T021 [US4] Add image gallery to ProductDetailSheet (display all product.images with carousel or grid)
+- [X] T022 [US4] Add supplier information section to ProductDetailSheet (name, location, verification badges)
+- [X] T023 [US4] Add platform-specific data section to ProductDetailSheet (conditionally render Alibaba metrics or Made-in-China data)
+- [X] T024 [US4] Add link to source platform (button to open product.url in new tab)
+- [X] T025 [US4] Integrate ProductDetailSheet into app/search/page.tsx (state management for selectedProduct, onProductClick handler)
+- [X] T026 [US4] Add graceful handling for missing fields in ProductDetailSheet (hide sections with no data)
 
 **Checkpoint**: At this point, User Stories 1 AND 4 are complete - users can search, browse, and view detailed product information (MVP complete!)
 
