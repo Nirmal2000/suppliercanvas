@@ -1,0 +1,448 @@
+openapi: 3.0.3
+info:
+  title: Multi-Platform Search API
+  description: |
+    Internal API routes for proxying searches to B2B sourcing platforms.
+    These Next.js API routes handle CORS, rate limiting, and data normalization.
+  version: 1.0.0
+  contact:
+    name: API Support
+
+servers:
+  - url: http://localhost:3000
+    description: Local development
+  - url: https://suppliercanvas.vercel.app
+    description: Production
+
+tags:
+  - name: Search
+    description: Multi-platform product search endpoints
+
+paths:
+  /api/search/alibaba:
+    get:
+      summary: Search Alibaba suppliers
+      description: |
+        Proxies search requests to Alibaba's supplier search API and returns
+        normalized UnifiedProduct results.
+      operationId: searchAlibaba
+      tags:
+        - Search
+      parameters:
+        - name: query
+          in: query
+          required: true
+          description: Search keywords (e.g., "vacuum cleaner", "compressed sofa")
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 200
+          example: "vacuum cleaner"
+        - name: page
+          in: query
+          required: false
+          description: Page number for pagination (starts at 1)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          example: 1
+        - name: pageSize
+          in: query
+          required: false
+          description: Results per page (Alibaba default is 20)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          example: 20
+      responses:
+        '200':
+          description: Successful search response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+              examples:
+                success:
+                  summary: Successful search with results
+                  value:
+                    success: true
+                    platform: "alibaba"
+                    results:
+                      - id: "alibaba-281906743-1601496778544"
+                        platform: "alibaba"
+                        name: "Foshan Maotong Home Furnishing Technology Co., Ltd."
+                        price: "₹7,704.35-25,589.44"
+                        currency: "INR"
+                        moq: "Min. order: 2 pieces"
+                        images:
+                          - "https://img.alicdn.com/...icon.png"
+                        supplier:
+                          id: "281906743"
+                          name: "Foshan Maotong Home Furnishing Technology Co., Ltd."
+                          location: "Guangdong Province, CN"
+                          verification: ["Gold 2 yrs"]
+                        url: "https://mouton.en.alibaba.com/company_profile.html"
+                        platformSpecific:
+                          reviewScore: "4.7"
+                          reviewCount: 22
+                    totalCount: 50000
+                    page: 1
+                    hasMore: true
+        '400':
+          description: Bad request - missing or invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: "Query parameter is required"
+        '500':
+          description: Internal server error - platform API failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                platform: "alibaba"
+                error: "Alibaba API request failed"
+
+  /api/search/madeinchina:
+    get:
+      summary: Search Made-in-China suppliers
+      description: |
+        Fetches and parses Made-in-China company search results,
+        returning normalized UnifiedProduct results.
+      operationId: searchMadeInChina
+      tags:
+        - Search
+      parameters:
+        - name: query
+          in: query
+          required: true
+          description: Search keywords (spaces will be replaced with +)
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 200
+          example: "compressible sofa"
+        - name: page
+          in: query
+          required: false
+          description: Page number for pagination (starts at 1)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          example: 1
+      responses:
+        '200':
+          description: Successful search response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+              examples:
+                success:
+                  summary: Successful search with results
+                  value:
+                    success: true
+                    platform: "madeinchina"
+                    results:
+                      - id: "mic-PBkGYzgbCcVN"
+                        platform: "madeinchina"
+                        name: "Guangzhou Ailin Home Technology Co., LTD"
+                        price: null
+                        currency: null
+                        moq: null
+                        images:
+                          - "https://image.made-in-china.com/...jpg"
+                        supplier:
+                          id: "PBkGYzgbCcVN"
+                          name: "Guangzhou Ailin Home Technology Co., LTD"
+                          location: "Foshan, Guangdong"
+                          verification: ["2 Stars"]
+                        url: "https://ailinsofa.en.made-in-china.com"
+                        platformSpecific:
+                          mainProducts: ["Sofa", "Compressed Sofa"]
+                          capabilityStars: 2
+                    totalCount: 56
+                    page: 1
+                    hasMore: true
+        '400':
+          description: Bad request - missing or invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error - HTML parsing or fetch failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/search/all:
+    get:
+      summary: Search all platforms concurrently
+      description: |
+        Executes parallel searches across all enabled platforms and returns
+        aggregated results. Supports partial success - returns results from
+        platforms that succeeded even if others fail.
+      operationId: searchAllPlatforms
+      tags:
+        - Search
+      parameters:
+        - name: query
+          in: query
+          required: true
+          description: Search keywords
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 200
+          example: "wireless headphones"
+        - name: page
+          in: query
+          required: false
+          description: Page number (applies to all platforms)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          example: 1
+        - name: platforms
+          in: query
+          required: false
+          description: Comma-separated list of platforms to search
+          schema:
+            type: string
+            pattern: '^(alibaba|madeinchina)(,(alibaba|madeinchina))*$'
+            default: "alibaba,madeinchina"
+          example: "alibaba,madeinchina"
+      responses:
+        '200':
+          description: Aggregated search results (may include partial failures)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AggregatedSearchResponse'
+              examples:
+                fullSuccess:
+                  summary: All platforms returned results
+                  value:
+                    query: "wireless headphones"
+                    timestamp: 1734000000000
+                    results:
+                      - platform: "alibaba"
+                        success: true
+                        results: [...]
+                        totalCount: 50000
+                        page: 1
+                        hasMore: true
+                      - platform: "madeinchina"
+                        success: true
+                        results: [...]
+                        totalCount: 234
+                        page: 1
+                        hasMore: true
+                partialSuccess:
+                  summary: One platform failed, one succeeded
+                  value:
+                    query: "wireless headphones"
+                    timestamp: 1734000000000
+                    results:
+                      - platform: "alibaba"
+                        success: true
+                        results: [...]
+                        page: 1
+                        hasMore: true
+                      - platform: "madeinchina"
+                        success: false
+                        results: []
+                        error: "HTML parsing failed"
+                        page: 1
+                        hasMore: false
+        '400':
+          description: Bad request - invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    UnifiedProduct:
+      type: object
+      required:
+        - id
+        - platform
+        - name
+        - images
+        - supplier
+        - url
+        - platformSpecific
+      properties:
+        id:
+          type: string
+          description: Unique identifier in format "{platform}-{companyId}-{productId?}"
+          example: "alibaba-281906743-1601496778544"
+        platform:
+          $ref: '#/components/schemas/PlatformType'
+        name:
+          type: string
+          description: Product or company name
+          minLength: 1
+          example: "Foshan Maotong Home Furnishing Technology Co., Ltd."
+        description:
+          type: string
+          nullable: true
+          description: Product description (if available)
+        price:
+          type: string
+          nullable: true
+          description: Display price or price range
+          example: "₹7,704.35-25,589.44"
+        currency:
+          type: string
+          nullable: true
+          description: ISO currency code
+          example: "USD"
+        moq:
+          type: string
+          nullable: true
+          description: Minimum order quantity
+          example: "Min. order: 2 pieces"
+        images:
+          type: array
+          items:
+            type: string
+            format: uri
+          description: Array of image URLs
+          example:
+            - "https://img.alicdn.com/...icon.png"
+            - "https://s.alicdn.com/...product.jpg"
+        supplier:
+          $ref: '#/components/schemas/Supplier'
+        url:
+          type: string
+          format: uri
+          description: Link to company/product page on source platform
+          example: "https://mouton.en.alibaba.com/company_profile.html"
+        platformSpecific:
+          type: object
+          additionalProperties: true
+          description: Platform-specific data preserved for detail views
+          example:
+            reviewScore: "4.7"
+            reviewCount: 22
+            onTimeDelivery: "87%"
+
+    Supplier:
+      type: object
+      required:
+        - id
+        - name
+        - verification
+      properties:
+        id:
+          type: string
+          description: Platform-specific supplier ID
+          example: "281906743"
+        name:
+          type: string
+          description: Supplier company name
+          example: "Foshan Maotong Home Furnishing Technology Co., Ltd."
+        location:
+          type: string
+          description: City and country/province
+          example: "Guangdong Province, CN"
+        verification:
+          type: array
+          items:
+            type: string
+          description: Array of verification badges
+          example: ["Verified Supplier", "Gold 2 yrs", "Factory"]
+
+    PlatformType:
+      type: string
+      enum:
+        - alibaba
+        - madeinchina
+      description: Supported B2B sourcing platforms
+
+    SearchResponse:
+      type: object
+      required:
+        - success
+        - platform
+        - results
+        - page
+        - hasMore
+      properties:
+        success:
+          type: boolean
+          description: Whether the search succeeded
+        platform:
+          $ref: '#/components/schemas/PlatformType'
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/UnifiedProduct'
+        totalCount:
+          type: integer
+          description: Total available results (if known)
+          example: 50000
+        page:
+          type: integer
+          minimum: 1
+          description: Current page number
+          example: 1
+        hasMore:
+          type: boolean
+          description: Whether more pages are available
+        error:
+          type: string
+          description: Error message if success is false
+
+    AggregatedSearchResponse:
+      type: object
+      required:
+        - query
+        - timestamp
+        - results
+      properties:
+        query:
+          type: string
+          description: Search query that was executed
+          example: "wireless headphones"
+        timestamp:
+          type: integer
+          format: int64
+          description: Unix timestamp (ms) when search was executed
+          example: 1734000000000
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/SearchResponse'
+          description: Results from each platform (may include failures)
+
+    ErrorResponse:
+      type: object
+      required:
+        - success
+        - error
+      properties:
+        success:
+          type: boolean
+          enum: [false]
+        platform:
+          $ref: '#/components/schemas/PlatformType'
+        error:
+          type: string
+          description: Human-readable error message
+          example: "Query parameter is required"
