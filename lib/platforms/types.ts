@@ -40,3 +40,26 @@ export interface PlatformAdapter {
   search(query: string, page?: number): Promise<SearchResult>;
   mapToUnified(payload: unknown): UnifiedProduct[];
 }
+
+export type FilterType = 'select' | 'range' | 'boolean';
+
+export interface FilterDefinition {
+  id: string;
+  label: string;
+  type: FilterType;
+  platform: PlatformType;
+  options?: { label: string; value: string | number | boolean }[];
+  min?: number;
+  max?: number;
+  unit?: string;
+}
+
+export interface FilterValue {
+  filterId: string;
+  value: string | number | boolean | { min: number; max: number };
+}
+
+export interface FilterCriteria {
+  platform: PlatformType;
+  filters: FilterValue[];
+}

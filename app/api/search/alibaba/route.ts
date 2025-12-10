@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 
 import { mapAlibabaToUnified } from '@/lib/platforms/alibaba/mapper';
 import { AlibabaSearchResponse } from '@/lib/platforms/alibaba/types';
+import { createProxyAgent } from '@/lib/proxy';
 
 const ALIBABA_ENDPOINT = 'https://www.alibaba.com/search/api/supplierTextSearch';
 const DEFAULT_PAGE_SIZE = 20;
@@ -26,10 +27,13 @@ export async function GET(request: Request) {
   const targetUrl = buildAlibabaUrl(query, page, pageSize);
 
   try {
+    const agent = createProxyAgent();
     const response = await fetch(targetUrl, {
       headers: {
         accept: 'application/json,text/javascript,*/*;q=0.01',
       },
+      // @ts-expect-error - agent is supported in Node.js fetch
+      agent,
       cache: 'no-store',
     });
 

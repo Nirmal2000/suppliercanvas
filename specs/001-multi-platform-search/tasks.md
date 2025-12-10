@@ -105,11 +105,11 @@ This is a Next.js App Router web application:
 
 ### Implementation for User Story 2
 
-- [ ] T027 [US2] Create PlatformFilter component in components/search/platform-filter.tsx (checkboxes for Alibaba and Made-in-China)
-- [ ] T028 [US2] Add platform filter state management to app/search/page.tsx (selectedPlatforms state with Set<PlatformType>)
-- [ ] T029 [US2] Implement client-side filtering logic in app/search/page.tsx (filter allProducts based on selectedPlatforms before passing to ProductGrid)
-- [ ] T030 [US2] Add "no platforms selected" empty state to ProductGrid (message when selectedPlatforms is empty)
-- [ ] T031 [US2] Integrate PlatformFilter component into app/search/page.tsx UI (place above ProductGrid)
+- [X] T027 [US2] Create PlatformFilter component in components/search/platform-filter.tsx (checkboxes for Alibaba and Made-in-China)
+- [X] T028 [US2] Add platform filter state management to app/search/page.tsx (selectedPlatforms state with Set<PlatformType>)
+- [X] T029 [US2] Implement client-side filtering logic in app/search/page.tsx (filter allProducts based on selectedPlatforms before passing to ProductGrid)
+- [X] T030 [US2] Add "no platforms selected" empty state to ProductGrid (message when selectedPlatforms is empty)
+- [X] T031 [US2] Integrate PlatformFilter component into app/search/page.tsx UI (place above ProductGrid)
 
 **Checkpoint**: At this point, User Stories 1, 4, AND 2 work independently - users can search, filter by platform, and view details
 
@@ -123,15 +123,15 @@ This is a Next.js App Router web application:
 
 ### Implementation for User Story 3
 
-- [ ] T032 [P] [US3] Create filter type definitions in lib/platforms/types.ts (FilterDefinition, FilterCriteria, FilterValue types)
-- [ ] T033 [US3] Create filter service in lib/search/filter-service.ts (functions to apply filters to UnifiedProduct arrays)
-- [ ] T034 [US3] Implement getSupportedFilters in lib/platforms/alibaba/adapter.ts (return FilterDefinitions for Alibaba: verified supplier, gold years, MOQ range)
-- [ ] T035 [US3] Implement getSupportedFilters in lib/platforms/madeinchina/adapter.ts (return FilterDefinitions for Made-in-China: capability stars, audited supplier)
-- [ ] T036 [US3] Create AdvancedFilters component in components/search/advanced-filters.tsx (renders filter UI based on active platforms)
-- [ ] T037 [US3] Add filter state management to app/search/page.tsx (activeFilters state)
-- [ ] T038 [US3] Implement filter application logic in app/search/page.tsx (apply activeFilters to products before display)
-- [ ] T039 [US3] Add "Clear Filters" button to AdvancedFilters component
-- [ ] T040 [US3] Integrate AdvancedFilters component into app/search/page.tsx UI (place below PlatformFilter)
+- [X] T032 [P] [US3] Create filter type definitions in lib/platforms/types.ts (FilterDefinition, FilterCriteria, FilterValue types)
+- [X] T033 [US3] Create filter service in lib/search/filter-service.ts (functions to apply filters to UnifiedProduct arrays)
+- [X] T034 [US3] Implement getSupportedFilters in lib/platforms/alibaba/adapter.ts (return FilterDefinitions for Alibaba: verified supplier, gold years, MOQ range)
+- [X] T035 [US3] Implement getSupportedFilters in lib/platforms/madeinchina/adapter.ts (return FilterDefinitions for Made-in-China: capability stars, audited supplier)
+- [X] T036 [US3] Create AdvancedFilters component in components/search/advanced-filters.tsx (renders filter UI based on active platforms)
+- [X] T037 [US3] Add filter state management to app/search/page.tsx (activeFilters state)
+- [X] T038 [US3] Implement filter application logic in app/search/page.tsx (apply activeFilters to products before display)
+- [X] T039 [US3] Add "Clear Filters" button to AdvancedFilters component
+- [X] T040 [US3] Integrate AdvancedFilters component into app/search/page.tsx UI (place below PlatformFilter)
 
 **Checkpoint**: All user stories (1, 2, 3, 4) are now independently functional - full feature set complete
 
@@ -141,13 +141,13 @@ This is a Next.js App Router web application:
 
 **Purpose**: Improvements that affect multiple user stories and overall quality
 
-- [ ] T041 [P] Update app root page (app/page.tsx) to redirect or link to /search
+- [X] T041 [P] Update app root page (app/page.tsx) to redirect or link to /search
 - [ ] T042 [P] Add loading skeleton components to ProductGrid for better UX during search
 - [ ] T043 [P] Add image loading states and error fallbacks to ProductCard (handle broken image URLs)
 - [ ] T044 [P] Add responsive design improvements for mobile/tablet views
 - [ ] T045 [P] Add keyboard navigation support (Enter key in search bar, Escape to close detail sheet)
 - [ ] T046 [P] Add meta tags and page titles for SEO in app/search/page.tsx
-- [ ] T047 Optimize image loading with Next.js Image component (already using in ProductCard, verify settings)
+- [X] T047 Optimize image loading with Next.js Image component (already using in ProductCard, verify settings)
 - [ ] T048 Add error boundary component for graceful error handling
 - [ ] T049 Add analytics events (optional, client-side only, privacy-preserving)
 - [ ] T050 Code review and cleanup (remove console.logs, add TypeScript strict checks, format code)

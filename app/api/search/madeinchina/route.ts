@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 
 import { mapMICToUnified } from '@/lib/platforms/madeinchina/mapper';
 import { parseMICHTML } from '@/lib/platforms/madeinchina/parser';
+import { createProxyAgent } from '@/lib/proxy';
 
 const BASE_URL = 'https://www.made-in-china.com';
 const PAGE_SIZE = 20;
@@ -25,6 +26,7 @@ export async function GET(request: Request) {
   const targetUrl = buildSearchUrl(query, page);
 
   try {
+    const agent = createProxyAgent();
     const response = await fetch(targetUrl, {
       headers: {
         'User-Agent':
@@ -33,6 +35,8 @@ export async function GET(request: Request) {
         'Accept-Language': 'en-US,en;q=0.8',
         Referer: BASE_URL,
       },
+      // @ts-expect-error - agent is supported in Node.js fetch
+      agent,
       cache: 'no-store',
     });
 
