@@ -151,6 +151,7 @@ This is a Next.js App Router web application:
 - [ ] T048 Add error boundary component for graceful error handling
 - [ ] T049 Add analytics events (optional, client-side only, privacy-preserving)
 - [ ] T050 Code review and cleanup (remove console.logs, add TypeScript strict checks, format code)
+- [ ] T051 [P] Implement "Load More" pagination in search page (append results from next page)
 
 ---
 
