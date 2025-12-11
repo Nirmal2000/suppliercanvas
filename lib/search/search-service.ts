@@ -9,7 +9,17 @@ export async function searchPlatform(
   page: number = 1
 ): Promise<SearchResult> {
   try {
-    const url = `/api/search/${platform}?query=${encodeURIComponent(query)}&page=${page}`;
+    let endpoint = '';
+    if (platform === 'alibaba') {
+      endpoint = '/api/search/alibaba/product';
+    } else if (platform === 'madeinchina') {
+      endpoint = '/api/search/made-in-china/product';
+    } else {
+      // Fallback for any other platforms
+      endpoint = `/api/search/${platform}`;
+    }
+
+    const url = `${endpoint}?query=${encodeURIComponent(query)}&page=${page}`;
     const response = await fetch(url);
 
     if (!response.ok) {
