@@ -1,84 +1,56 @@
 import { tool } from '@langchain/core/tools';
 import { searchToolSchema, searchToolMetadata, SearchToolOutput } from '@/contracts/tool.types';
-import { searchAlibabaText } from '@/lib/platforms/alibaba/service';
-import { searchMicText } from '@/lib/platforms/madeinchina/service';
-import { UnifiedProduct, UnifiedSupplier } from '@/lib/platforms/types';
+import { searchUnified } from '@/lib/search/unified-service';
+import { PlatformType, SearchInput } from '@/lib/platforms/types';
+
 
 export const searchTool = tool(
-    async ({ query, searchType }) => {
+    async ({ queries, searchType }, config) => {
         try {
-            console.log(`[Agent] Searching for "${query}" (Type: ${searchType})`);
+            console.log(`[Agent] Searching for queries: ${queries.join(', ')} (Type: ${searchType})`);
 
-            // Execute searches in parallel
-            const [alibabaRes, micRes] = await Promise.allSettled([
-                searchAlibabaText(query),
-                searchMicText(query)
-            ]);
+            // Extract attachments from config
+            const attachments = (config.configurable?.attachments as string[] | undefined) || [];
+            console.log(`[Agent] Found ${attachments.length} attachments in context`);
 
-            let allProducts: UnifiedProduct[] = [];
+            const inputs: SearchInput[] = [];
 
-            if (alibabaRes.status === 'fulfilled') {
-                allProducts = [...allProducts, ...alibabaRes.value.unifiedProducts];
-            } else {
-                console.error('[Agent] Alibaba search failed:', alibabaRes.reason);
-            }
-
-            if (micRes.status === 'fulfilled') {
-                allProducts = [...allProducts, ...micRes.value.unifiedProducts];
-            } else {
-                console.error('[Agent] MIC search failed:', micRes.reason);
-            }
-
-            // Group products into suppliers (Simplified logic matching Unified API)
-            const supplierMap = new Map<string, UnifiedSupplier>();
-
-            allProducts.forEach(product => {
-                const supplierName = product.supplier.name || 'Unknown Supplier';
-                const supplierKey = `${product.platform}-${product.supplier.id || supplierName}`;
-
-                if (!supplierMap.has(supplierKey)) {
-                    supplierMap.set(supplierKey, {
-                        id: product.supplier.id || `sup-${Date.now()}-${Math.random()}`,
-                        platform: product.platform,
-                        name: supplierName,
-                        price: null,
-                        currency: product.currency,
-                        moq: null,
-                        images: [],
-                        products: [],
-                        supplier: {
-                            id: product.supplier.id || '',
-                            name: supplierName,
-                            location: product.supplier.location,
-                            verification: product.supplier.badges || [],
-                            url: product.supplier.url
-                        },
-                        url: product.supplier.url,
-                        platformSpecific: {},
-                        matchedInputIds: [] // Not applicable for single string query
-                    });
-                }
-
-                const supplier = supplierMap.get(supplierKey)!;
-                // Dedup products
-                if (!supplier.products.some(p => p.id === product.id)) {
-                    supplier.products.push(product);
-                }
+            // Add text queries
+            queries.forEach(q => {
+                inputs.push({
+                    id: `text-${Date.now()}-${Math.random()}`,
+                    type: 'text',
+                    value: q
+                });
             });
 
-            const unifiedResults = Array.from(supplierMap.values());
+            // Add image attachments
+            attachments.forEach((base64Image, index) => {
+                inputs.push({
+                    id: `image-${Date.now()}-${index}`,
+                    type: 'image',
+                    value: base64Image // Encoded base64 string
+                });
+            });
+
+            if (inputs.length === 0) {
+                return ["No search inputs provided.", { queries, searchType, results: [], count: 0 }];
+            }
+
+            // Execute unified search
+            const unifiedResults = await searchUnified(inputs, ['alibaba', 'madeinchina']);
             const count = unifiedResults.length;
 
             // Create output object matching contract
             const output: SearchToolOutput = {
-                query,
+                queries,
                 searchType,
                 results: unifiedResults, // Return ALL results in artifact
                 count
             };
 
             // Minimal summary for the Agent/LLM
-            const summary = `Found ${count} suppliers for "${query}". The results have been rendered in the main grid.`;
+            const summary = `Found ${count} suppliers for queries "${queries.join(', ')}" and ${attachments.length} images. The results have been rendered in the main grid.`;
 
             // Return content and artifact
             // The content goes to the LLM. The artifact goes to the client state.
@@ -96,3 +68,4 @@ export const searchTool = tool(
         responseFormat: "content_and_artifact"
     }
 );
+

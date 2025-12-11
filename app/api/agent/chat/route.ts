@@ -7,7 +7,7 @@ import { searchTool } from "@/lib/agent/tools";
 import { ChatRequest, StreamEvent, SerializedMessage } from "@/contracts/api.types";
 
 // Force dynamic since we read request body and stream response
-export const dynamic = 'force-dynamic';
+
 export const maxDuration = 60; // Allow 60s for agent thinking/tools
 
 export async function POST(req: NextRequest) {
@@ -21,54 +21,116 @@ export async function POST(req: NextRequest) {
 
         // 1. Initialize LLM
         const llm = new ChatOpenAI({
-            model: "gpt-4o-mini", // Updated from modelName
+            model: "google/gemini-2.5-pro", // Updated to vision-capable model
             temperature: 0,
+            configuration: {
+                apiKey: process.env.OPENAI_API_KEY,
+                baseURL: "https://openrouter.ai/api/v1/",
+            },
         });
 
         // 2. Define Tools
         const tools = [searchTool];
-
-        // 3. Create Agent (New API)
-        // Note: We are using the user-provided API signature. 
-        // If 'createAgent' is not found, we might need 'createToolCallingAgent' from 'langchain/agents' but without AgentExecutor?
-        // No, the snippet implies a new unified entry point.
-        // If this fails at runtime/build, we will revert/fix.
-        // For now, I will use the code as requested.
-
-        // Wait, if I write invalid code it won't run.
-        // I'll assume 'langchain' exports it.
-        // However, I suspect the user might be using a wrapper or hypothetical API? 
-        // "AgentExecutor ... are legacy ... Use createAgent".
-        // Let's assume this exists.
 
         const agent = createAgent({
             model: llm,
             tools,
             systemPrompt: `You are a helpful sourcing assistant for SupplierCanvas. 
 You help users find suppliers on Alibaba and Made-in-China. 
-ALWAYS use the 'search' tool when the user asks for products or suppliers. 
-When the tool returns results, they are automatically shown to the user in the main grid, 
-so you should just briefly summarize what you found (e.g. 'I found 10 suppliers for X...'). 
-Do not list all products in the chat unless specifically asked.`,
+
+CORE BEHAVIORS:
+1. DESCRIPTIVE RESPONSES: Be elaborative and descriptive in your analysis. Don't just give short answers. Explain *why* you are searching for specific terms.
+2. SEARCH STRATEGY:
+   - When a user provides a specific product name (e.g., "compressed sofa"), DO NOT just search for that one term. You MUST generate multiple relevant search queries including synonyms, industry terms, and variations (e.g., "boneless sofa", "sofa in a box", "flat-pack sofa", "vacuum packed sofa").
+   - When a user provides a broad description (e.g., "something to sit on that expands"), analyze the intent and extract relevant commercial keywords for search.
+3. IMAGE INPUTS:
+   - If the user provides an image, you MUST identify the product shown.
+   - You MUST IMMEDIATELY call the 'search' tool with keywords derived from the image analysis. This is mandatory for all image inputs.
+
+ALWAYS use the 'search' tool when the user asks for products, describes a need, or uploads an image.
+When calling the search tool, provide an array of diverse, high-value keywords in the 'queries' argument to maximize results.
+When tool results are returned, they are automatically shown to the user. Briefly summarize the findings (e.g., "I found 10 suppliers matching your criteria...") but focus your text response on the *quality* of the match or specific details rather than just listing names.`,
         });
 
-        // 4. Prepare History
-        // Fix for "m throws when doing m.type" -> use 'any' cast and safe checks
-        // 4. Prepare History
+        // 4. Prepare History & Context
         const messagesData = messages as SerializedMessage[];
-        const lastMessage = messagesData[messagesData.length - 1]!;
-        const history = messagesData.slice(0, -1).map((m: SerializedMessage) => {
-            if (m.type === 'human') return new HumanMessage(m.data.content || "");
-            if (m.type === 'ai') return new AIMessage(m.data.content || "");
-            if (m.type === 'tool') {
-                return new ToolMessage({
-                    content: m.data.content || "",
-                    tool_call_id: m.data.tool_call_id || "",
-                    ...m.data
-                });
+        const history: (HumanMessage | AIMessage | ToolMessage)[] = [];
+        let attachments: string[] = []; // Store base64 images from the LAST user message
+
+        // Process all messages except the last one
+        for (let i = 0; i < messagesData.length - 1; i++) {
+            const m = messagesData[i];
+
+            // Check both data.content (new format) and kwargs.content (old format)
+            const content = m.data?.content || m.kwargs?.content || "";
+
+            // Determine type: check m.type first, then fall back to ID check
+            let type = m.type;
+            if (type === 'constructor' && m.id) {
+                const classType = m.id[m.id.length - 1];
+                if (classType === 'HumanMessage') type = 'human';
+                else if (classType === 'AIMessage') type = 'ai';
+                else if (classType === 'ToolMessage') type = 'tool';
             }
-            return new HumanMessage(m.data?.content || "");
-        });
+
+            if (type === 'human') history.push(new HumanMessage(content));
+            else if (type === 'ai') history.push(new AIMessage(content));
+            else if (type === 'tool') {
+                history.push(new ToolMessage({
+                    content: content,
+                    tool_call_id: m.kwargs?.tool_call_id || "",
+                    name: m.kwargs?.name || m.data?.name || "tool"
+                }));
+            }
+        }
+
+        // Process the LAST message (User's current input)
+        const lastMessageData = messagesData[messagesData.length - 1];
+        let lastContentText = lastMessageData.data?.content || lastMessageData.kwargs?.content || "";
+
+        // Handle array content (multimodal)
+        if (Array.isArray(lastContentText)) {
+            const textBlock = lastContentText.find((c: any) => c.type === 'text');
+            lastContentText = textBlock ? textBlock.text : "";
+        }
+        console.log("Extracted Text:", lastContentText);
+        // Check for images in the last message's payload
+        // We look in 'data' properties for custom fields like 'images'
+        const lastImages = (lastMessageData.data as any)?.images || (lastMessageData as any).images || [];
+
+        // Construct the final HumanMessage
+        let finalUserMessage: HumanMessage;
+
+        if (lastImages && lastImages.length > 0) {
+            attachments = lastImages; // Capture for tool config
+            console.log(`[Agent] Received ${attachments.length} images`);
+
+            // Multimodal Content Block
+            const contentBlocks: any[] = [
+                { type: "text", text: lastContentText }
+            ];
+
+            lastImages.forEach((img: string) => {
+                // Parse data URI: data:image/jpeg;base64,...
+                const [metadata, base64Data] = img.split(',');
+                const mimeType = metadata.split(':')[1].split(';')[0];
+
+                contentBlocks.push({
+                    type: "image",
+                    image_url: {
+                        url: img
+                    },
+                    // base64: base64Data,
+                    // mime_type: mimeType,
+                } as any);
+                console.log(`[Agent] Added image: ${mimeType}, length: ${base64Data.length}`);
+            });
+
+            finalUserMessage = new HumanMessage({ content: contentBlocks });
+        } else {
+            // Text-only
+            finalUserMessage = new HumanMessage(lastContentText);
+        }
 
         // 5. Create Streaming Response
         const stream = new ReadableStream({
@@ -79,23 +141,45 @@ Do not list all products in the chat unless specifically asked.`,
                         {
                             messages: [
                                 ...history,
-                                new HumanMessage(lastMessage.data.content || "")
+                                finalUserMessage
                             ]
                         },
                         {
-                            version: "v1",
-                            streamMode: ["values", "updates"]
+                            streamMode: ["values", "updates"],
+                            // Pass attachments to tools via configurable
+                            configurable: {
+                                attachments: attachments
+                            }
                         }
                     );
 
                     for await (const event of eventStream) {
-                        // Updated event mapping for v1
-                        if (event.event === "on_chat_model_stream") {
+                        // Handle both chat model stream and generic llm stream
+                        console.log("Agent Event:", event.event, event.name);
+                        if (event.event === "on_chat_model_stream" || event.event === "on_llm_stream") {
                             const chunk = event.data.chunk;
-                            if (chunk && chunk.content) {
+
+                            // Debugging reasoning content
+                            console.log("----------------------------------------------------------------");
+                            console.log("Chunk keys:", Object.keys(chunk || {}));
+                            if (chunk?.lc_kwargs) console.log("lc_kwargs:", JSON.stringify(chunk.lc_kwargs, null, 2));
+                            if (chunk?.additional_kwargs) console.log("additional_kwargs:", JSON.stringify(chunk.additional_kwargs, null, 2));
+                            if (chunk?.message?.additional_kwargs) console.log("message.additional_kwargs:", JSON.stringify(chunk.message.additional_kwargs, null, 2));
+                            console.log("----------------------------------------------------------------");
+
+                            // Check for content in various possible locations
+                            const content = chunk?.content || chunk?.message?.content || chunk?.text || "";
+
+                            if (content) {
                                 const streamEvent: StreamEvent = {
                                     type: 'model',
-                                    data: { messages: [chunk] },
+                                    data: {
+                                        messages: [{
+                                            content,
+                                            type: 'ai',
+                                            data: { content }
+                                        } as any]
+                                    },
                                     timestamp: Date.now()
                                 };
                                 controller.enqueue(JSON.stringify(streamEvent) + "\n");
@@ -103,8 +187,6 @@ Do not list all products in the chat unless specifically asked.`,
                         } else if (event.event === "on_tool_end") {
                             // Check for output
                             if (event.data.output) {
-                                // For 'content_and_artifact', output might be complex.
-                                // We pass it through.
                                 const streamEvent: StreamEvent = {
                                     type: 'tools',
                                     data: { output: event.data.output },
@@ -112,13 +194,21 @@ Do not list all products in the chat unless specifically asked.`,
                                 };
                                 controller.enqueue(JSON.stringify(streamEvent) + "\n");
                             }
+                        } else if (event.event === "on_llm_error" || event.event === "on_tool_error" || event.event === "on_chain_error") {
+                            console.error("Agent Stream Error Event:", event);
                         }
                     }
 
-                    controller.close();
+                    // Safely close
+                    if (controller.desiredSize !== null) {
+                        controller.close();
+                    }
                 } catch (e) {
-                    console.error("Stream error", e);
-                    controller.error(e);
+                    console.error("Stream error", JSON.stringify(e));
+                    // Only error if stream is still open
+                    if (controller.desiredSize !== null) {
+                        controller.error(e);
+                    }
                 }
             }
         });

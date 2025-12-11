@@ -1,7 +1,7 @@
 "use client"
 
 import { cn } from "@/lib/utils"
-import { StickToBottom } from "use-stick-to-bottom"
+
 
 export type ChatContainerRootProps = {
   children: React.ReactNode
@@ -24,15 +24,15 @@ function ChatContainerRoot({
   ...props
 }: ChatContainerRootProps) {
   return (
-    <StickToBottom
-      className={cn("flex overflow-y-auto", className)}
-      resize="smooth"
-      initial="instant"
+    <div
+      className={cn("flex flex-col-reverse overflow-y-auto", className)}
       role="log"
       {...props}
     >
-      {children}
-    </StickToBottom>
+      <div className="flex flex-col w-full">
+        {children}
+      </div>
+    </div>
   )
 }
 
@@ -42,12 +42,12 @@ function ChatContainerContent({
   ...props
 }: ChatContainerContentProps) {
   return (
-    <StickToBottom.Content
+    <div
       className={cn("flex w-full flex-col", className)}
       {...props}
     >
       {children}
-    </StickToBottom.Content>
+    </div>
   )
 }
 

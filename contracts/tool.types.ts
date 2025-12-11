@@ -22,18 +22,16 @@ import { UnifiedSupplier } from '@/lib/platforms/types';
  */
 export const searchToolSchema = z.object({
   /**
-   * Free-form search query text
+   * List of search query strings
    *
    * Examples:
-   * - "white sofas"
-   * - "Find me compressed furniture under $500"
-   * - "leather chairs with armrests"
+   * - ["white sofas", "leather chairs"]
+   * - ["compressed furniture"]
    */
-  query: z
-    .string()
-    .min(1, 'Query cannot be empty')
-    .max(500, 'Query exceeds maximum length')
-    .describe('Free-form search query text.'),
+  queries: z
+    .array(z.string())
+    .min(1, 'At least one query is required')
+    .describe('List of search query strings to execute.'),
 
   /**
    * Type of search to perform
@@ -61,9 +59,9 @@ export type SearchToolInput = z.infer<typeof searchToolSchema>;
  */
 export interface SearchToolOutput {
   /**
-   * The original query that was executed
+   * The original queries that were executed
    */
-  query: string;
+  queries: string[];
 
   /**
    * The type of search that was performed
@@ -108,8 +106,9 @@ export const searchToolMetadata = {
    * Should be clear and concise.
    */
   description:
-    'Searches for products or suppliers based on a text query. ' +
-    'Use this tool when the user asks to find, search for, or look up products or suppliers. ' +
+    'Searches for products or suppliers based on a list of text queries. ' +
+    'Use this tool when the user asks to find products or suppliers. ' +
+    'The tool accepts multiple keywords/phrases to search simultaneously.' +
     'The tool returns a list of matching results with details like pricing, images, and supplier information.',
 } as const;
 

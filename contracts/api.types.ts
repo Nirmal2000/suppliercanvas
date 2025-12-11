@@ -5,15 +5,18 @@
  * Route: POST /api/agent/chat
  */
 
-import { BaseMessage } from '@langchain/core/messages';
-
 // 1. Add proper typing for your messages
+// 1. LangChain Serialized Message Format
 export interface SerializedMessage {
-  type: 'human' | 'ai' | 'tool';
-  data: {
-    content?: string;
-    [key: string]: any; // For ToolMessage data
+  type: 'constructor' | 'human' | 'ai' | 'tool';
+  id: string[];
+  kwargs: {
+    content: string;
+    tool_calls?: any[];
+    response_metadata?: any;
+    [key: string]: any;
   };
+  data?: any; // To support newer LangChain serialization or custom payloads
 }
 
 // Update your api.types.ts StreamEvent to support tool outputs
