@@ -6,7 +6,7 @@
  */
 
 import * as z from 'zod';
-import { UnifiedSupplier } from '@/lib/platforms/types';
+import { UnifiedSupplier, SearchInput } from '@/lib/platforms/types';
 
 // ============================================================================
 // Search Tool
@@ -84,6 +84,11 @@ export interface SearchToolOutput {
    * Should equal results.length
    */
   count: number;
+
+  /**
+   * The actual input objects used for the search, including IDs and images.
+   */
+  inputs?: SearchInput[];
 }
 
 /**

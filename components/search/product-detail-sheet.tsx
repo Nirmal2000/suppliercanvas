@@ -118,8 +118,8 @@ export function ProductDetailSheet({
                       key={idx}
                       onClick={() => setSelectedImageIndex(idx)}
                       className={`relative flex-shrink-0 w-20 h-20 rounded-md overflow-hidden border-2 transition-colors ${idx === selectedImageIndex
-                          ? 'border-primary'
-                          : 'border-transparent hover:border-muted-foreground'
+                        ? 'border-primary'
+                        : 'border-transparent hover:border-muted-foreground'
                         }`}
                     >
                       <Image
@@ -177,6 +177,24 @@ export function ProductDetailSheet({
               <p className="text-sm text-muted-foreground leading-relaxed">
                 {product.description}
               </p>
+            </div>
+          )}
+
+          {/* Product Specifications (Attributes) */}
+          {product.products.length > 0 && product.products[0].attributes && Object.keys(product.products[0].attributes).length > 0 && (
+            <div className="space-y-3 p-4 rounded-lg bg-muted/30">
+              <h3 className="font-semibold text-sm flex items-center gap-2">
+                <Package className="h-4 w-4" />
+                Specifications
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                {Object.entries(product.products[0].attributes).map(([key, value]) => (
+                  <div key={key} className="flex justify-between border-b border-border/50 pb-1 last:border-0">
+                    <span className="text-muted-foreground">{key}</span>
+                    <span className="font-medium text-right">{value}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 

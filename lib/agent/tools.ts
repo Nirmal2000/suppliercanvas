@@ -46,8 +46,13 @@ export const searchTool = tool(
                 queries,
                 searchType,
                 results: unifiedResults, // Return ALL results in artifact
-                count
+                count,
+                inputs // <--- Return the actual inputs used (with IDs) to the client
             };
+
+            // Enhanced Debug for User
+            console.log(`[Agent Tool] Returning artifact with ${inputs.length} inputs and ${unifiedResults.length} results.`);
+            inputs.forEach(i => console.log(`[Agent Tool Input] ID: ${i.id}, Type: ${i.type}, Value Length: ${i.value.length}`));
 
             // Minimal summary for the Agent/LLM
             const summary = `Found ${count} suppliers for queries "${queries.join(', ')}" and ${attachments.length} images. The results have been rendered in the main grid.`;

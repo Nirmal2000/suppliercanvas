@@ -170,19 +170,42 @@ function parseMicSearchResults(html: string): any[] {
             productUrl = "https:" + productUrl;
         }
 
-        // Image
-        // Priority: data-original (lazy load), then src
-        const $img = $el.find(".img-wrap img").first();
-        let imageUrl = $img.attr("data-original") || $img.attr("src") || "";
-        // Clean up placeholder if data-original was missing (sometimes src is a spacer)
-        if (imageUrl.includes("space.png") && $img.attr("data-original")) {
-            imageUrl = $img.attr("data-original") || "";
-        }
-        if (imageUrl && !imageUrl.startsWith("http")) {
-            if (imageUrl.startsWith("//")) {
-                imageUrl = "https:" + imageUrl;
+        // Images - Extract all available images
+        const images: string[] = [];
+        const $imgs = $el.find(".img-wrap img");
+
+        $imgs.each((_, img) => {
+            const $img = $(img);
+            let imageUrl = $img.attr("data-original") || $img.attr("src") || "";
+
+            // Clean up placeholder if data-original was missing
+            if (imageUrl.includes("space.png") && $img.attr("data-original")) {
+                imageUrl = $img.attr("data-original") || "";
+            }
+
+            if (imageUrl && !imageUrl.startsWith("http")) {
+                if (imageUrl.startsWith("//")) {
+                    imageUrl = "https:" + imageUrl;
+                }
+            }
+
+            if (imageUrl && !images.includes(imageUrl)) {
+                images.push(imageUrl);
+            }
+        });
+
+        // Fallback if no images found via loop (e.g. single image not in standard list)
+        if (images.length === 0) {
+            const $img = $el.find(".img-wrap img").first();
+            let imageUrl = $img.attr("data-original") || $img.attr("src") || "";
+            if (imageUrl.includes("space.png") && $img.attr("data-original")) imageUrl = $img.attr("data-original") || "";
+            if (imageUrl) {
+                if (imageUrl.startsWith("//")) imageUrl = "https:" + imageUrl;
+                images.push(imageUrl);
             }
         }
+
+        const imageUrl = images[0] || "";
 
         // Price
         const price = $el.find(".price").text().trim();
@@ -238,6 +261,7 @@ function parseMicSearchResults(html: string): any[] {
                 title,
                 productUrl,
                 imageUrl,
+                images,
                 price,
                 moq,
                 companyName,
@@ -267,17 +291,41 @@ function parseMicImageSearchResults(html: string): any[] {
             productUrl = "https:" + productUrl;
         }
 
-        // Image
-        const $img = $el.find(".prod-img .img-thumb-inner img").first();
-        let imageUrl = $img.attr("data-original") || $img.attr("src") || "";
-        if (imageUrl.includes("space.png") && $img.attr("data-original")) {
-            imageUrl = $img.attr("data-original") || "";
-        }
-        if (imageUrl && !imageUrl.startsWith("http")) {
-            if (imageUrl.startsWith("//")) {
-                imageUrl = "https:" + imageUrl;
+        // Images - Extract all available
+        const images: string[] = [];
+        // Look for main image and thumbnails
+        const $imgs = $el.find(".prod-img img, .img-thumb-inner img");
+
+        $imgs.each((_, img) => {
+            const $img = $(img);
+            let imageUrl = $img.attr("data-original") || $img.attr("src") || "";
+
+            if (imageUrl.includes("space.png") && $img.attr("data-original")) {
+                imageUrl = $img.attr("data-original") || "";
+            }
+
+            if (imageUrl && !imageUrl.startsWith("http")) {
+                if (imageUrl.startsWith("//")) {
+                    imageUrl = "https:" + imageUrl;
+                }
+            }
+
+            if (imageUrl && !images.includes(imageUrl)) {
+                images.push(imageUrl);
+            }
+        });
+
+        // Fallback
+        if (images.length === 0) {
+            const $img = $el.find(".prod-img .img-thumb-inner img").first();
+            let imageUrl = $img.attr("data-original") || $img.attr("src") || "";
+            if (imageUrl) {
+                if (imageUrl.startsWith("//")) imageUrl = "https:" + imageUrl;
+                images.push(imageUrl);
             }
         }
+
+        const imageUrl = images[0] || "";
 
         // Price
         const price = $el.find(".price").text().trim();
@@ -324,6 +372,7 @@ function parseMicImageSearchResults(html: string): any[] {
                 title,
                 productUrl,
                 imageUrl,
+                images,
                 price,
                 moq,
                 companyName: companyName.replace(/[\n\r\t]/g, "").trim(),

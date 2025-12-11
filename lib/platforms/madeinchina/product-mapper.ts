@@ -11,7 +11,9 @@ export function mapMicToUnifiedProduct(rawProduct: any): UnifiedProduct {
         platform: 'madeinchina',
         title: rawProduct.title || 'Untitled Product',
         image: rawProduct.imageUrl || '',
-        images: [rawProduct.imageUrl].filter(Boolean), // MIC scraper currently only gets one main image per list item
+        images: (rawProduct.images && rawProduct.images.length > 0)
+            ? rawProduct.images
+            : [rawProduct.imageUrl].filter(Boolean),
         price: rawProduct.price || null,
         currency: detectCurrency(rawProduct.price),
         moq: rawProduct.moq || null,

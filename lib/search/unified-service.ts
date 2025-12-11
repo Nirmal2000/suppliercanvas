@@ -137,6 +137,26 @@ function groupProductsIntoSuppliers(products: (UnifiedProduct & { _sourceInputId
             // We need to cast because we added _sourceInputId to the type temporarily in the array
             const { _sourceInputId, ...startProduct } = product;
             supplier.products.push(startProduct as UnifiedProduct);
+
+            // Populate Supplier-level fields from the first product encountered
+            // (or accumulate images from all products)
+            if (supplier.products.length === 1) {
+                supplier.price = product.price;
+                supplier.moq = product.moq;
+                supplier.description = product.attributes ? Object.entries(product.attributes).map(([k, v]) => `${k}: ${v}`).join(', ') : undefined;
+                supplier.platformSpecific = product.platformSpecific;
+            }
+
+            // Aggregate images from all products
+            if (product.images && product.images.length > 0) {
+                product.images.forEach(img => {
+                    if (!supplier.images.includes(img)) {
+                        supplier.images.push(img);
+                    }
+                });
+            } else if (product.image && !supplier.images.includes(product.image)) {
+                supplier.images.push(product.image);
+            }
         }
 
         // Track matched input ID

@@ -12,7 +12,7 @@ import { Message, MessageContent } from "@/components/ui/message";
 import { PromptInput, PromptInputTextarea, PromptInputActions, PromptInputAction } from "@/components/ui/prompt-input";
 import { Button } from "@/components/ui/button";
 import { ArrowUp, Loader2, Paperclip, X } from "lucide-react";
-import { HumanMessage, AIMessage } from "@langchain/core/messages";
+import { HumanMessage, AIMessage, ToolMessage } from "@langchain/core/messages";
 import { Tool } from "@/components/ui/tool";
 import { FileUpload, FileUploadTrigger } from "@/components/ui/file-upload";
 import { Image as UIImage } from "@/components/ui/image";
@@ -184,11 +184,57 @@ export function ChatSidebar() {
                                 console.log("Client Tool Artifact Found:", artifact);
                                 if (artifact.results) {
                                     console.log("Setting Search Results:", artifact.results.length);
+
+                                    // PREFERRED: Use inputs from artifact (contains correct IDs and Images)
+                                    if (artifact.inputs && Array.isArray(artifact.inputs)) {
+                                        console.log("Setting Search Inputs from Agent Artifact:", artifact.inputs);
+                                        useSearchStore.getState().setSearchInputs(artifact.inputs);
+                                    }
+                                    // FALLBACK: Extract from queries if inputs are missing
+                                    else if (artifact.queries && Array.isArray(artifact.queries)) {
+                                        const newInputs = artifact.queries.map((q: string) => ({
+                                            id: crypto.randomUUID(),
+                                            type: 'text',
+                                            value: q
+                                        }));
+                                        console.log("Setting Search Inputs from Agent Queries (Fallback):", newInputs);
+                                        useSearchStore.getState().setSearchInputs(newInputs);
+                                    }
+
                                     useSearchStore.getState().setSearchResults(artifact.results);
                                 }
                             } else {
                                 console.log("No artifact found in tool output");
                             }
+
+                            // FIX: Add ToolMessage to the UI state so it renders!
+                            // We use the artifact as the display content, but truncate the huge results array and inputs
+                            let displayContent = output;
+
+                            if (artifact) {
+                                const displayArtifact = { ...artifact };
+
+                                // Truncate results
+                                if (Array.isArray(displayArtifact.results)) {
+                                    displayArtifact.results = `<${displayArtifact.results.length} results (hidden)>`;
+                                }
+
+                                // Truncate inputs (contains base64 images)
+                                if (Array.isArray(displayArtifact.inputs)) {
+                                    displayArtifact.inputs = `<${displayArtifact.inputs.length} inputs (hidden)>`;
+                                }
+
+                                // Use the clean artifact as the message content
+                                displayContent = displayArtifact;
+                            }
+
+                            const toolMsg = new ToolMessage({
+                                content: JSON.stringify(displayContent),
+                                tool_call_id: event.data.tool_call_id || "unknown",
+                                name: event.data.name || "tool",
+                                status: "success"
+                            });
+                            addMessage(toolMsg);
                         }
                     } catch (e) {
                         console.error("Error parsing stream line", e);

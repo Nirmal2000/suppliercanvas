@@ -24,7 +24,12 @@ export default function SearchPage() {
   );
 
   // Agent Store Sync
-  const { searchResults: agentResults, setSearchResults: setAgentResults } = useSearchStore();
+  const {
+    searchResults: agentResults,
+    searchInputs: agentInputs,
+    setSearchResults: setAgentResults,
+    setSearchInputs: setAgentInputs
+  } = useSearchStore();
 
   const [activeFilters, setActiveFilters] = useState<FilterValue[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<UnifiedSupplier | null>(null);
@@ -33,13 +38,18 @@ export default function SearchPage() {
 
   // Sync Agent Results to Local State
   useEffect(() => {
-    console.log("Page Sync Effect - Agent Results:", agentResults?.length, "Loading:", loading);
+    console.log("Page Sync Effect - Agent Results:", agentResults?.length, "Inputs:", agentInputs?.length, "Loading:", loading);
     // If agent has results and we aren't currently loading a manual search
     if (agentResults.length > 0 && !loading) {
       console.log("Updating Page Results from Agent");
       setResults(agentResults);
+
+      // Sync Inputs if available
+      if (agentInputs && agentInputs.length > 0) {
+        setInputs(agentInputs);
+      }
     }
-  }, [agentResults, loading]);
+  }, [agentResults, agentInputs, loading]);
 
   const handleSearch = async (searchInputs: SearchInput[]) => {
     setInputs(searchInputs);
@@ -52,6 +62,7 @@ export default function SearchPage() {
       const aggregatedResults = await searchUnified(searchInputs, platforms);
       setResults(aggregatedResults.results);
       setAgentResults(aggregatedResults.results); // Sync to Agent Store
+      setAgentInputs(searchInputs); // Sync Inputs to Agent Store
     } catch (error) {
       console.error('Search failed:', error);
       setResults([]);

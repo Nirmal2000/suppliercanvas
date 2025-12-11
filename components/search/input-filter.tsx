@@ -33,8 +33,18 @@ export function InputFilter({ inputs, selectedInputId, onSelect }: InputFilterPr
           className="cursor-pointer flex items-center gap-1 hover:bg-primary/90 transition-colors py-1.5"
           onClick={() => onSelect(input.id === selectedInputId ? null : input.id)}
         >
-          {input.type === 'text' ? <Link className="h-3 w-3" /> : <ImageIcon className="h-3 w-3" />}
-          <span className="max-w-[150px] truncate">{input.value}</span>
+          {input.type === 'image' ? (
+            <img
+              src={input.value}
+              alt="Input"
+              className="h-5 w-5 rounded object-cover border bg-muted"
+            />
+          ) : (
+            <Link className="h-3 w-3" />
+          )}
+          <span className="max-w-[150px] truncate">
+            {input.type === 'image' ? 'Image' : input.value}
+          </span>
         </Badge>
       ))}
 
