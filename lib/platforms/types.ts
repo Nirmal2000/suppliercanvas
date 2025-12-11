@@ -1,4 +1,12 @@
 export type PlatformType = 'alibaba' | 'madeinchina';
+export type SearchInputType = 'text' | 'image';
+
+export interface SearchInput {
+  id: string;
+  type: SearchInputType;
+  value: string; // text query or image name
+  file?: File; // for client-side usage, might not be serializable from server
+}
 
 export interface UnifiedSupplier {
   id: string;
@@ -19,6 +27,7 @@ export interface UnifiedSupplier {
   };
   url: string;
   platformSpecific: Record<string, unknown>;
+  matchedInputIds?: string[];
 }
 
 export interface UnifiedProduct {
@@ -50,11 +59,12 @@ export interface SearchResult {
   totalCount?: number;
   page: number;
   hasMore: boolean;
+  sourceInputId?: string;
 }
 
 export interface AggregatedSearchResult {
-  query: string;
-  results: SearchResult[];
+  inputs: SearchInput[];
+  results: UnifiedSupplier[]; // Flattened results for unified view
   timestamp: number;
 }
 

@@ -1,19 +1,22 @@
 'use client';
 
-import { UnifiedSupplier, UnifiedProduct } from '@/lib/platforms/types';
+import { UnifiedSupplier, UnifiedProduct, SearchInput } from '@/lib/platforms/types';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
-import { MapPin, ShieldCheck, Star } from 'lucide-react';
+import { MapPin, ShieldCheck, Star, Link, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface SupplierCardProps {
     supplier: UnifiedSupplier;
     onClick: () => void;
     onProductClick: (product: UnifiedProduct) => void;
+    inputs?: SearchInput[];
 }
 
-export function SupplierCard({ supplier, onClick, onProductClick }: SupplierCardProps) {
+export function SupplierCard({ supplier, onClick, onProductClick, inputs = [] }: SupplierCardProps) {
+    // Determine matched inputs
+    const matchedInputs = supplier.matchedInputIds?.map(id => inputs.find(i => i.id === id)).filter(Boolean) as SearchInput[] || [];
     // Platform badge styling
     const platformColor = supplier.platform === 'alibaba' ? 'default' : 'secondary';
     const platformName = supplier.platform === 'madeinchina' ? 'Made-in-China' : 'Alibaba';
@@ -52,11 +55,20 @@ export function SupplierCard({ supplier, onClick, onProductClick }: SupplierCard
                                     {supplier.supplier.location}
                                 </div>
                             )}
-                            {/* 
-                   Rating could be populated if we normalized it into the UnifiedSupplier 
-                   For now, we check platformSpecific or tags if available, but let's hide if not explicit
-                */}
                         </div>
+
+                        {/* Matched By Badges */}
+                        {matchedInputs.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-2">
+                                <span className="text-[10px] text-muted-foreground mr-1 self-center">Matched by:</span>
+                                {matchedInputs.map(input => (
+                                    <Badge key={input.id} variant="outline" className="text-[10px] px-1 py-0 h-5 bg-background border-dashed">
+                                        {input.type === 'text' ? <Link className="h-2 w-2 mr-1" /> : <ImageIcon className="h-2 w-2 mr-1" />}
+                                        <span className="max-w-[100px] truncate">{input.value}</span>
+                                    </Badge>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
                     <div className="shrink-0">

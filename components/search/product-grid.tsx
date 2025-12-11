@@ -1,6 +1,6 @@
 'use client';
 
-import { UnifiedSupplier } from '@/lib/platforms/types';
+import { UnifiedSupplier, SearchInput } from '@/lib/platforms/types';
 import { SupplierCard } from './supplier-card';
 import { Package } from 'lucide-react';
 
@@ -9,13 +9,15 @@ interface ProductGridProps {
   onProductClick: (product: UnifiedSupplier) => void;
   loading?: boolean;
   emptyMessage?: string;
+  inputs?: SearchInput[];
 }
 
 export function ProductGrid({
   products,
   onProductClick,
   loading = false,
-  emptyMessage = "No products found. Try a different search query or adjust your filters."
+  emptyMessage = "No products found. Try a different search query or adjust your filters.",
+  inputs = []
 }: ProductGridProps) {
   // Loading skeleton
   if (loading) {
@@ -69,6 +71,7 @@ export function ProductGrid({
           // The current `onProductClick` (inherited prop name) takes a UnifiedSupplier.
           // So we just call it with the supplier.
           onProductClick={(product) => onProductClick(supplier)}
+          inputs={inputs}
         />
       ))}
     </div>
