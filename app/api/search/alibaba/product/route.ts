@@ -28,26 +28,25 @@ export async function GET(request: NextRequest) {
         }
 
         const html = await response.text();
+        // Regex to extract the window.__page__data_sse10._offer_list content
+        // Looking for: window.__page__data_sse10._offer_list = { ... };
+        const regex = /window\.__page__data_sse10\._offer_list\s*=\s*({[\s\S]*?})(?=\s*<\/script>)/;
 
-        // Regex to extract the window.__page__data_sse10 content
-        // Looking for: window.__page__data_sse10 = { ... };
-        // Using [\s\S] instead of dot with 's' flag for broader compatibility
-        const regex = /window\.__page__data_sse10\s*=\s*(\{[\s\S]*?\});/;
         const match = html.match(regex);
 
         if (!match || !match[1]) {
-            console.error("Could not find window.__page__data_sse10 in HTML");
+            console.error("Could not find window.__page__data_sse10._offer_list in HTML");
             return NextResponse.json({ error: 'Failed to extract data from vendor' }, { status: 502 });
         }
 
         const jsonString = match[1];
-
+        console.log("JSON STRING", jsonString)
         try {
-            const data = JSON.parse(jsonString);
-
-            // Navigate to the target path: _offer_list.offerResultData.offers[0].productList
-            const offerList = data._offer_list;
-            if (!offerList) throw new Error("Missing _offer_list");
+            const offerList = JSON.parse(jsonString);
+            console.log("OFFER LIST", offerList)
+            // Navigate to the target path: offerResultData.offers[0].productList
+            // Note: We need to handle potential missing paths safely.
+            if (!offerList) throw new Error("Missing _offer_list data");
 
             const offerResultData = offerList.offerResultData;
             if (!offerResultData) throw new Error("Missing offerResultData");
