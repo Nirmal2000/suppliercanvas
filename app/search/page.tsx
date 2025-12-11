@@ -6,7 +6,7 @@ import { ProductGrid } from '@/components/search/product-grid';
 import { ProductDetailSheet } from '@/components/search/product-detail-sheet';
 import { PlatformFilter } from '@/components/search/platform-filter';
 import { AdvancedFilters } from '@/components/search/advanced-filters';
-import { UnifiedProduct, PlatformType, SearchResult, FilterValue } from '@/lib/platforms/types';
+import { UnifiedSupplier, PlatformType, SearchResult, FilterValue } from '@/lib/platforms/types';
 import { searchAllPlatforms } from '@/lib/search/search-service';
 import { applyFilters } from '@/lib/search/filter-service';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
@@ -22,7 +22,7 @@ export default function SearchPage() {
   const [page, setPage] = useState(1);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [activeFilters, setActiveFilters] = useState<FilterValue[]>([]);
-  const [selectedProduct, setSelectedProduct] = useState<UnifiedProduct | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<UnifiedSupplier | null>(null);
   const [detailSheetOpen, setDetailSheetOpen] = useState(false);
 
   const handleSearch = async (searchQuery: string) => {
@@ -182,7 +182,7 @@ export default function SearchPage() {
       {/* Results Grid */}
       <ProductGrid
         products={allProducts}
-        onProductClick={(product: UnifiedProduct) => {
+        onProductClick={(product: UnifiedSupplier) => {
           setSelectedProduct(product);
           setDetailSheetOpen(true);
         }}

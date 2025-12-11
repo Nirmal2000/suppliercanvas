@@ -1,12 +1,12 @@
 'use client';
 
-import { UnifiedProduct } from '@/lib/platforms/types';
-import { ProductCard } from './product-card';
+import { UnifiedSupplier } from '@/lib/platforms/types';
+import { SupplierCard } from './supplier-card';
 import { Package } from 'lucide-react';
 
 interface ProductGridProps {
-  products: UnifiedProduct[];
-  onProductClick: (product: UnifiedProduct) => void;
+  products: UnifiedSupplier[];
+  onProductClick: (product: UnifiedSupplier) => void;
   loading?: boolean;
   emptyMessage?: string;
 }
@@ -54,14 +54,21 @@ export function ProductGrid({
     );
   }
 
-  // Product grid
+  // Product grid (actually Supplier Grid now)
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-      {products.map((product) => (
-        <ProductCard
-          key={product.id}
-          product={product}
-          onClick={() => onProductClick(product)}
+    <div className="flex flex-col gap-6">
+      {products.map((supplier) => (
+        <SupplierCard
+          key={supplier.id}
+          supplier={supplier}
+          onClick={() => onProductClick(supplier)}
+          // Since the main sheet logic expects a 'UnifiedSupplier', we handle clicks on products 
+          // by potentially opening the same sheet but maybe scrolling to products?
+          // For now, let's keep it simple: clicking a product also opens the Supplier Sheet
+          // But ideally we might want a 'Product specific' view later.
+          // The current `onProductClick` (inherited prop name) takes a UnifiedSupplier.
+          // So we just call it with the supplier.
+          onProductClick={(product) => onProductClick(supplier)}
         />
       ))}
     </div>

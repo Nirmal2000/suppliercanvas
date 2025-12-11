@@ -1,15 +1,15 @@
-import { UnifiedProduct } from '../types';
+import { UnifiedProduct, UnifiedSupplier } from '../types';
 import { MICCompany, MICProductSummary, MICSearchResponse } from './types';
 
 const PLATFORM = 'madeinchina' as const;
 
-export function mapMICToUnified(response: MICSearchResponse): UnifiedProduct[] {
+export function mapMICToUnified(response: MICSearchResponse): UnifiedSupplier[] {
   return (response.companies ?? [])
     .filter((company): company is MICCompany => Boolean(company?.companyId))
     .map((company) => mapCompanyToProduct(company));
 }
 
-function mapCompanyToProduct(company: MICCompany): UnifiedProduct {
+function mapCompanyToProduct(company: MICCompany): UnifiedSupplier {
   const verification = buildVerificationBadges(company);
   const images = buildImageCollection(company);
   const description = company.mainProducts?.slice(0, 3).join(', ') || undefined;
@@ -23,6 +23,7 @@ function mapCompanyToProduct(company: MICCompany): UnifiedProduct {
     currency: null,
     moq: null,
     images,
+    products: (company.productList ?? []).map((p) => mapMICSubProductToUnified(p, company)),
     supplier: {
       id: company.companyId,
       name: company.companyName,
@@ -79,6 +80,31 @@ function buildPlatformSpecific(company: MICCompany): Record<string, unknown> {
     chatId: company.chatId,
     productList: company.productList,
     productImages: company.productImages,
+  };
+}
+
+function mapMICSubProductToUnified(product: MICProductSummary, company: MICCompany): UnifiedProduct {
+  return {
+    id: `mic-${product.name.toLowerCase().replace(/[^a-z0-9]+/gi, '-')}`, // best effort ID
+    platform: PLATFORM,
+    title: product.name,
+    image: normalizeUrl(product.image, 'https://www.made-in-china.com'),
+    images: product.image ? [normalizeUrl(product.image, 'https://www.made-in-china.com')] : [],
+    price: null, // Summary doesn't have price
+    currency: null,
+    moq: null,
+    productUrl: normalizeUrl(product.url, 'https://www.made-in-china.com'),
+    attributes: {},
+    supplier: {
+      id: company.companyId,
+      name: company.companyName,
+      url: normalizeUrl(company.companyUrl, 'https://www.made-in-china.com'),
+      location: formatLocation(company.city, company.province),
+      badges: buildVerificationBadges(company),
+    },
+    platformSpecific: {
+      ...product,
+    }
   };
 }
 

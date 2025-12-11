@@ -36,7 +36,7 @@ Ensure your development environment has:
 // lib/platforms/types.ts
 export type PlatformType = 'alibaba' | 'madeinchina';
 
-export interface UnifiedProduct {
+export interface UnifiedSupplier {
   id: string;
   platform: PlatformType;
   name: string;
@@ -58,7 +58,7 @@ export interface UnifiedProduct {
 export interface SearchResult {
   platform: PlatformType;
   success: boolean;
-  results: UnifiedProduct[];
+  results: UnifiedSupplier[];
   error?: string;
   totalCount?: number;
   page: number;
@@ -73,8 +73,8 @@ export interface AggregatedSearchResult {
 
 export interface PlatformAdapter {
   platform: PlatformType;
-  search(query: string, page: number): Promise<UnifiedProduct[]>;
-  mapToUnified(rawData: unknown): UnifiedProduct[];
+  search(query: string, page: number): Promise<UnifiedSupplier[]>;
+  mapToUnified(rawData: unknown): UnifiedSupplier[];
 }
 ```
 
@@ -88,9 +88,9 @@ export interface PlatformAdapter {
 
 **Files to Create**:
 1. `lib/platforms/alibaba/types.ts` - Alibaba-specific types
-2. `lib/platforms/alibaba/mapper.ts` - Alibaba → UnifiedProduct mapper
+2. `lib/platforms/alibaba/mapper.ts` - Alibaba → UnifiedSupplier mapper
 3. `lib/platforms/madeinchina/types.ts` - MIC-specific types
-4. `lib/platforms/madeinchina/mapper.ts` - MIC → UnifiedProduct mapper
+4. `lib/platforms/madeinchina/mapper.ts` - MIC → UnifiedSupplier mapper
 
 **Implementation Pattern** (Alibaba example):
 
@@ -127,10 +127,10 @@ export interface AlibabaOffer {
 }
 
 // lib/platforms/alibaba/mapper.ts
-import { UnifiedProduct } from '../types';
+import { UnifiedSupplier } from '../types';
 import { AlibabaOffer } from './types';
 
-export function mapAlibabaToUnified(offer: AlibabaOffer): UnifiedProduct {
+export function mapAlibabaToUnified(offer: AlibabaOffer): UnifiedSupplier {
   const firstProduct = offer.productList?.[0];
 
   return {
@@ -192,7 +192,7 @@ import { mapAlibabaToUnified } from '@/lib/platforms/alibaba/mapper';
 import { AlibabaOffer } from '@/lib/platforms/alibaba/types';
 
 describe('Alibaba Mapper', () => {
-  it('should map complete Alibaba offer to UnifiedProduct', () => {
+  it('should map complete Alibaba offer to UnifiedSupplier', () => {
     const offer: AlibabaOffer = {
       companyId: '12345',
       companyName: 'Test Company',
@@ -517,12 +517,12 @@ export function SearchBar({ onSearch, loading = false }: SearchBarProps) {
 // components/search/product-grid.tsx
 'use client';
 
-import { UnifiedProduct } from '@/lib/platforms/types';
+import { UnifiedSupplier } from '@/lib/platforms/types';
 import { ProductCard } from './product-card';
 
 interface ProductGridProps {
-  products: UnifiedProduct[];
-  onProductClick: (product: UnifiedProduct) => void;
+  products: UnifiedSupplier[];
+  onProductClick: (product: UnifiedSupplier) => void;
 }
 
 export function ProductGrid({ products, onProductClick }: ProductGridProps) {
@@ -554,13 +554,13 @@ export function ProductGrid({ products, onProductClick }: ProductGridProps) {
 // components/search/product-card.tsx
 'use client';
 
-import { UnifiedProduct } from '@/lib/platforms/types';
+import { UnifiedSupplier } from '@/lib/platforms/types';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 
 interface ProductCardProps {
-  product: UnifiedProduct;
+  product: UnifiedSupplier;
   onClick: () => void;
 }
 
@@ -628,7 +628,7 @@ import { SearchBar } from '@/components/search/search-bar';
 import { ProductGrid } from '@/components/search/product-grid';
 import { PlatformFilter } from '@/components/search/platform-filter';
 import { ProductDetailSheet } from '@/components/search/product-detail-sheet';
-import { UnifiedProduct, PlatformType, SearchResult } from '@/lib/platforms/types';
+import { UnifiedSupplier, PlatformType, SearchResult } from '@/lib/platforms/types';
 
 export default function SearchPage() {
   const [query, setQuery] = useState('');
@@ -637,7 +637,7 @@ export default function SearchPage() {
   const [selectedPlatforms, setSelectedPlatforms] = useState<Set<PlatformType>>(
     new Set(['alibaba', 'madeinchina'])
   );
-  const [selectedProduct, setSelectedProduct] = useState<UnifiedProduct | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<UnifiedSupplier | null>(null);
 
   const handleSearch = async (searchQuery: string) => {
     setQuery(searchQuery);

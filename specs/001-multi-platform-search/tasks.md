@@ -41,7 +41,7 @@ This is a Next.js App Router web application:
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [X] T004 [P] Create core TypeScript interfaces in lib/platforms/types.ts (UnifiedProduct, PlatformType, SearchResult, AggregatedSearchResult, PlatformAdapter)
+- [X] T004 [P] Create core TypeScript interfaces in lib/platforms/types.ts (UnifiedSupplier, PlatformType, SearchResult, AggregatedSearchResult, PlatformAdapter)
 - [X] T005 [P] Create Alibaba-specific types in lib/platforms/alibaba/types.ts (AlibabaSearchResponse, AlibabaOffer)
 - [X] T006 [P] Create Made-in-China-specific types in lib/platforms/madeinchina/types.ts (MICCompany, MICSearchResponse)
 - [X] T007 [P] Implement Alibaba data mapper in lib/platforms/alibaba/mapper.ts (mapAlibabaToUnified function)
@@ -124,7 +124,7 @@ This is a Next.js App Router web application:
 ### Implementation for User Story 3
 
 - [X] T032 [P] [US3] Create filter type definitions in lib/platforms/types.ts (FilterDefinition, FilterCriteria, FilterValue types)
-- [X] T033 [US3] Create filter service in lib/search/filter-service.ts (functions to apply filters to UnifiedProduct arrays)
+- [X] T033 [US3] Create filter service in lib/search/filter-service.ts (functions to apply filters to UnifiedSupplier arrays)
 - [X] T034 [US3] Implement getSupportedFilters in lib/platforms/alibaba/adapter.ts (return FilterDefinitions for Alibaba: verified supplier, gold years, MOQ range)
 - [X] T035 [US3] Implement getSupportedFilters in lib/platforms/madeinchina/adapter.ts (return FilterDefinitions for Made-in-China: capability stars, audited supplier)
 - [X] T036 [US3] Create AdvancedFilters component in components/search/advanced-filters.tsx (renders filter UI based on active platforms)

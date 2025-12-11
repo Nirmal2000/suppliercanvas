@@ -1,0 +1,285 @@
+{
+  "offers": [
+    {
+      "adInfo": {
+        "adgroupId": "string",
+        "campaignId": "string",
+        "campaignType": "string",
+        "creativeId": "string",
+        "creativeInfo": {
+          "viewProfileText": "string",
+          "contactText": "string",
+          "reviewsText": "string",
+          "chatNowText": "string",
+          "mainProduct": [
+            {
+              "price": "string",
+              "imageUrl": "string",
+              "action": "string",
+              "id": "number",
+              "title": "string"
+            }
+          ],
+          "ratingText": "string",
+          "CPTHalfTrust": "boolean",
+          "factoryCapabilityText": "string",
+          "tpText": "string",
+          "adDescriptionPCText": "string",
+          "adTitleText": "string",
+          "products": [
+            {
+              "price": "string",
+              "imageUrl": "string",
+              "action": "string",
+              "id": "number",
+              "title": "string"
+            }
+          ]
+        },
+        "elementScene": "boolean",
+        "ext": "string",
+        "extraData": {},
+        "immersion": "boolean",
+        "multiTemplate": [
+          {
+            "content": "string",
+            "height": "string",
+            "layout": "string",
+            "pcName": "string",
+            "tags": [
+              "string"
+            ],
+            "width": "string"
+          }
+        ],
+        "qtag": "string",
+        "templateId": "string",
+        "trackInfo": "string"
+      },
+      "badges": [
+        "unknown"
+      ],
+      "certifications": [
+        "unknown",
+        {
+          "prefixIcons": [
+            {
+              "disableBorder": "boolean",
+              "name": "string",
+              "url": "string"
+            }
+          ],
+          "textBold": "boolean"
+        }
+      ],
+      "chatToken": "string",
+      "clickEurl": "string",
+      "companyId": "string",
+      "companyName": "string",
+      "contactSupplier": "string",
+      "countryCode": "string",
+      "customGroup": "string",
+      "displayStarLevel": "string",
+      "eurl": "string",
+      "goldSupplierIcon": "string",
+      "goldSupplierYears": "string",
+      "halfTrust": "boolean",
+      "id": "number",
+      "impsEurl": "string",
+      "isNewAd": "boolean",
+      "isP4P": "boolean",
+      "isShowAd": "boolean",
+      "loopSellingPoints": [
+        "unknown",
+        {
+          "loopType": "string",
+          "prefixIcons": [
+            {
+              "disableBorder": "boolean",
+              "intervalSpace": "number",
+              "url": "string"
+            }
+          ],
+          "text": "string",
+          "textBold": "boolean"
+        },
+        {
+          "loopType": "string",
+          "prefixIcons": [
+            {
+              "disableBorder": "boolean",
+              "intervalSpace": "number",
+              "url": "string"
+            }
+          ],
+          "text": "string",
+          "textBold": "boolean",
+          "textColor": "string"
+        },
+        {
+          "loopType": "string",
+          "prefixIcons": [
+            {
+              "disableBorder": "boolean",
+              "url": "string"
+            }
+          ],
+          "text": "string",
+          "textBold": "boolean",
+          "textColor": "string"
+        },
+        {
+          "loopType": "string",
+          "prefixIcons": [
+            {
+              "disableBorder": "boolean",
+              "intervalSpace": "number",
+              "url": "string"
+            },
+            {
+              "disableBorder": "boolean",
+              "url": "string"
+            }
+          ],
+          "text": "string",
+          "textBold": "boolean",
+          "textColor": "string"
+        }
+      ],
+      "lyb": "boolean",
+      "mainImage": "string",
+      "moq": "string",
+      "moqV2": "string",
+      "multiImage": [
+        "string"
+      ],
+      "pcLoopSellingPoints": [
+        "unknown",
+        {
+          "loopType": "string",
+          "prefixIcons": [
+            {
+              "disableBorder": "boolean",
+              "intervalSpace": "number",
+              "url": "string"
+            }
+          ],
+          "text": "string",
+          "textBold": "boolean"
+        },
+        {
+          "loopType": "string",
+          "prefixIcons": [
+            {
+              "disableBorder": "boolean",
+              "intervalSpace": "number",
+              "url": "string"
+            }
+          ],
+          "text": "string",
+          "textBold": "boolean",
+          "textColor": "string"
+        },
+        {
+          "loopType": "string",
+          "prefixIcons": [
+            {
+              "disableBorder": "boolean",
+              "url": "string"
+            }
+          ],
+          "text": "string",
+          "textBold": "boolean",
+          "textColor": "string"
+        },
+        {
+          "loopType": "string",
+          "prefixIcons": [
+            {
+              "disableBorder": "boolean",
+              "intervalSpace": "number",
+              "url": "string"
+            },
+            {
+              "disableBorder": "boolean",
+              "url": "string"
+            }
+          ],
+          "text": "string",
+          "textBold": "boolean",
+          "textColor": "string"
+        }
+      ],
+      "price": "string",
+      "productId": "string",
+      "productList": [
+        {
+          "badges": [
+            "unknown"
+          ],
+          "certifications": [
+            "unknown"
+          ],
+          "chatToken": "string",
+          "companyId": "string",
+          "companyName": "string",
+          "contactSupplier": "string",
+          "countryCode": "string",
+          "displayStarLevel": "string",
+          "goldSupplierIcon": "string",
+          "goldSupplierYears": "string",
+          "halfTrust": "boolean",
+          "id": "number",
+          "isNewAd": "boolean",
+          "isP4P": "boolean",
+          "isShowAd": "boolean",
+          "loopSellingPoints": [
+            "unknown"
+          ],
+          "lyb": "boolean",
+          "mainImage": "string",
+          "moq": "string",
+          "moqV2": "string",
+          "multiImage": [
+            "string"
+          ],
+          "pcLoopSellingPoints": [
+            "unknown"
+          ],
+          "price": "string",
+          "productId": "string",
+          "productScore": "string",
+          "productUrl": "string",
+          "reviewCount": "string",
+          "reviewScore": "string",
+          "shippingScore": "string",
+          "supplierHomeHref": "string",
+          "supplierHref": "string",
+          "supplierService": "string",
+          "supplierServiceScore": "string",
+          "title": "string",
+          "tmlid": "string",
+          "trackInfo": "string",
+          "tradeProduct": "boolean"
+        }
+      ],
+      "productScore": "string",
+      "productUrl": "string",
+      "rankScoreInfo": "string",
+      "reviewCount": "string",
+      "reviewScore": "string",
+      "shippingScore": "string",
+      "supplierHomeHref": "string",
+      "supplierHref": "string",
+      "supplierService": "string",
+      "supplierServiceScore": "string",
+      "title": "string",
+      "tmlid": "string",
+      "trackInfo": "string",
+      "tradeProduct": "boolean",
+      "soldOrder": "string",
+      "discount": "string",
+      "promotionPrice": "string"
+    }
+  ]
+}

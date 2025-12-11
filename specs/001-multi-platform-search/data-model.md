@@ -12,7 +12,7 @@ This document defines the core data models for the multi-platform product search
 
 ## Core Entities
 
-### 1. UnifiedProduct
+### 1. UnifiedSupplier
 
 The central entity representing a supplier/product offering from any platform, normalized to a common schema.
 
@@ -21,7 +21,7 @@ The central entity representing a supplier/product offering from any platform, n
 **Schema**:
 
 ```typescript
-interface UnifiedProduct {
+interface UnifiedSupplier {
   // Core Identifiers
   id: string;                    // Unique ID: "{platform}-{companyId}-{productId?}"
   platform: PlatformType;        // Source platform enum
@@ -109,7 +109,7 @@ Container for search results from a single platform, including metadata.
 interface SearchResult {
   platform: PlatformType;
   success: boolean;
-  results: UnifiedProduct[];
+  results: UnifiedSupplier[];
   error?: string;              // Error message if success = false
   totalCount?: number;         // Total available results (for pagination)
   page: number;
@@ -235,7 +235,7 @@ const userFilters: FilterCriteria = {
 
 ### 7. Alibaba Platform Data
 
-Stored in `platformSpecific` field of UnifiedProduct.
+Stored in `platformSpecific` field of UnifiedSupplier.
 
 **Schema** (matches docs/alibaba.md):
 
@@ -272,7 +272,7 @@ interface AlibabaPlatformData {
 
 ### 8. Made-in-China Platform Data
 
-Stored in `platformSpecific` field of UnifiedProduct.
+Stored in `platformSpecific` field of UnifiedSupplier.
 
 **Schema** (matches docs/mic.md):
 
@@ -319,7 +319,7 @@ interface SearchState {
   activeFilters: Record<string, FilterValue>;
 
   // UI State
-  selectedProduct: UnifiedProduct | null;  // For detail sheet
+  selectedProduct: UnifiedSupplier | null;  // For detail sheet
 }
 ```
 
@@ -441,7 +441,7 @@ interface MICSearchResponse {
 ```
 AggregatedSearchResult
   └─ results: SearchResult[]
-       └─ results: UnifiedProduct[]
+       └─ results: UnifiedSupplier[]
             ├─ platform: PlatformType
             ├─ supplier: {...}
             └─ platformSpecific: AlibabaPlatformData | MadeInChinaPlatformData
@@ -454,14 +454,14 @@ SearchState
   ├─ aggregatedResults: AggregatedSearchResult
   ├─ selectedPlatforms: Set<PlatformType>
   ├─ activeFilters: Record<string, FilterValue>
-  └─ selectedProduct: UnifiedProduct | null
+  └─ selectedProduct: UnifiedSupplier | null
 ```
 
 ---
 
 ## Normalization Examples
 
-### Example 1: Alibaba Offer → UnifiedProduct
+### Example 1: Alibaba Offer → UnifiedSupplier
 
 **Input** (Alibaba API):
 ```json
@@ -486,7 +486,7 @@ SearchState
 }
 ```
 
-**Output** (UnifiedProduct):
+**Output** (UnifiedSupplier):
 ```json
 {
   "id": "alibaba-281906743-1601496778544",
@@ -512,7 +512,7 @@ SearchState
 
 ---
 
-### Example 2: Made-in-China Company → UnifiedProduct
+### Example 2: Made-in-China Company → UnifiedSupplier
 
 **Input** (HTML parsing):
 ```json
@@ -529,7 +529,7 @@ SearchState
 }
 ```
 
-**Output** (UnifiedProduct):
+**Output** (UnifiedSupplier):
 ```json
 {
   "id": "mic-PBkGYzgbCcVN",
@@ -561,15 +561,15 @@ SearchState
 
 This data model provides:
 
-1. **Unified Schema**: All platforms map to `UnifiedProduct` for consistent UI rendering
+1. **Unified Schema**: All platforms map to `UnifiedSupplier` for consistent UI rendering
 2. **Extensibility**: Platform-specific data preserved in `platformSpecific` object
 3. **Type Safety**: TypeScript interfaces for all entities
 4. **Flexibility**: Nullable fields handle missing data gracefully
 5. **Separation**: Clear distinction between normalized data and platform-specific data
 
 **Implementation Files**:
-- `lib/platforms/types.ts` - Core interfaces (UnifiedProduct, PlatformType, etc.)
+- `lib/platforms/types.ts` - Core interfaces (UnifiedSupplier, PlatformType, etc.)
 - `lib/platforms/alibaba/types.ts` - Alibaba-specific interfaces
 - `lib/platforms/madeinchina/types.ts` - Made-in-China-specific interfaces
-- `lib/platforms/alibaba/mapper.ts` - Alibaba → UnifiedProduct mapping
-- `lib/platforms/madeinchina/mapper.ts` - Made-in-China → UnifiedProduct mapping
+- `lib/platforms/alibaba/mapper.ts` - Alibaba → UnifiedSupplier mapping
+- `lib/platforms/madeinchina/mapper.ts` - Made-in-China → UnifiedSupplier mapping

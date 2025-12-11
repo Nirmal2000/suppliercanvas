@@ -60,7 +60,7 @@ This document captures research findings for building a multi-platform B2B produ
 
 ```typescript
 // lib/platforms/types.ts
-export interface UnifiedProduct {
+export interface UnifiedSupplier {
   id: string;
   platform: PlatformType;
   name: string;
@@ -80,10 +80,10 @@ export interface UnifiedProduct {
 
 export interface PlatformAdapter {
   platform: PlatformType;
-  search(query: string, page: number): Promise<UnifiedProduct[]>;
-  mapToUnified(rawData: unknown): UnifiedProduct[];
+  search(query: string, page: number): Promise<UnifiedSupplier[]>;
+  mapToUnified(rawData: unknown): UnifiedSupplier[];
   getSupportedFilters(): FilterDefinition[];
-  applyFilter(products: UnifiedProduct[], filter: FilterCriteria): UnifiedProduct[];
+  applyFilter(products: UnifiedSupplier[], filter: FilterCriteria): UnifiedSupplier[];
 }
 
 export interface PlatformRegistry {
@@ -129,7 +129,7 @@ platformRegistry.register(madeInChinaAdapter);
 **Rationale**:
 - Alibaba API returns rich JSON with structured data
 - Made-in-China requires HTML parsing and field extraction
-- Both should map to the same `UnifiedProduct` schema
+- Both should map to the same `UnifiedSupplier` schema
 - Missing fields should be `null` rather than omitted
 - Platform-specific data stored in `platformSpecific` object for detail view
 
@@ -138,7 +138,7 @@ platformRegistry.register(madeInChinaAdapter);
 **Alibaba Mapping** (docs/alibaba.md):
 ```typescript
 // lib/platforms/alibaba/mapper.ts
-export function mapAlibabaToUnified(offer: AlibabaOffer): UnifiedProduct {
+export function mapAlibabaToUnified(offer: AlibabaOffer): UnifiedSupplier {
   return {
     id: `alibaba-${offer.companyId}-${offer.productList?.[0]?.productId || Date.now()}`,
     platform: 'alibaba',
@@ -178,7 +178,7 @@ export function mapAlibabaToUnified(offer: AlibabaOffer): UnifiedProduct {
 **Made-in-China Mapping** (docs/mic.md):
 ```typescript
 // lib/platforms/madeinchina/mapper.ts
-export function mapMICToUnified(company: MICCompany): UnifiedProduct {
+export function mapMICToUnified(company: MICCompany): UnifiedSupplier {
   return {
     id: `mic-${company.companyId}`,
     platform: 'madeinchina',
@@ -295,7 +295,7 @@ export async function searchAlibaba(query: string, page: number) {
 
 // Client Context State
 interface SearchState {
-  results: UnifiedProduct[];
+  results: UnifiedSupplier[];
   loading: boolean;
   error: string | null;
   selectedPlatforms: Set<PlatformType>;
@@ -363,7 +363,7 @@ export async function searchAllPlatforms(query: string, platforms: PlatformType[
 
 ## Next Steps (Phase 1)
 
-1. Create `data-model.md` with detailed UnifiedProduct schema
+1. Create `data-model.md` with detailed UnifiedSupplier schema
 2. Define OpenAPI contracts for API routes in `contracts/`
 3. Write implementation quickstart in `quickstart.md`
 4. Update agent context with chosen technologies

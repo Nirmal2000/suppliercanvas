@@ -1,4 +1,4 @@
-import { PlatformType, SearchResult, AggregatedSearchResult } from '@/lib/platforms/types';
+import { PlatformType, SearchResult, AggregatedSearchResult, UnifiedSupplier, UnifiedProduct } from '@/lib/platforms/types';
 
 /**
  * Search a single platform
@@ -26,8 +26,26 @@ export async function searchPlatform(
       throw new Error(`${platform} API returned ${response.status}`);
     }
 
-    const data: SearchResult = await response.json();
-    return data;
+    const data = await response.json();
+
+    // Normalize response: Alibaba returns 'products', MIC returns 'results'
+    // Both are arrays of UnifiedProduct
+    const productList: UnifiedProduct[] = data.products || data.results || [];
+    const totalCount = data.totalCount;
+    const hasMore = data.hasMore ?? false;
+
+    // Group the flat product list into UnifiedSuppliers
+    const groupedSuppliers = groupProductsIntoSuppliers(productList, platform);
+
+    return {
+      platform,
+      success: true,
+      results: groupedSuppliers,
+      totalCount, // This might be total PRODUCTS, not suppliers. UI should handle ambiguous total counts gracefully.
+      page: data.page || page,
+      hasMore
+    };
+
   } catch (error) {
     console.error(`Error searching ${platform}:`, error);
     return {
@@ -39,6 +57,49 @@ export async function searchPlatform(
       hasMore: false
     };
   }
+}
+
+/**
+ * Helper to group a flat list of products into UnifiedSupplier objects
+ */
+function groupProductsIntoSuppliers(products: UnifiedProduct[], platform: PlatformType): UnifiedSupplier[] {
+  const supplierMap = new Map<string, UnifiedSupplier>();
+
+  products.forEach(product => {
+    // Create a unique key for the supplier. Using name + platform to be safe.
+    // Some suppliers might not have an ID in the product response, so fallback to name.
+    const supplierName = product.supplier.name || 'Unknown Supplier';
+    const supplierKey = `${platform}-${product.supplier.id || supplierName}`;
+
+    if (!supplierMap.has(supplierKey)) {
+      supplierMap.set(supplierKey, {
+        id: product.supplier.id || `sup-${Date.now()}-${Math.random()}`,
+        platform: platform,
+        name: supplierName,
+        // Taking the first product's price/currency as a representative (or could be range)
+        // But UnifiedSupplier price is usually for the supplier entity (maybe empty)
+        price: null,
+        currency: product.currency,
+        moq: null,
+        images: [], // Supplier generic images (logo etc) - usually not in product response, can leave empty
+        products: [],
+        supplier: {
+          id: product.supplier.id || '',
+          name: supplierName,
+          location: product.supplier.location,
+          verification: product.supplier.badges || [],
+          url: product.supplier.url
+        },
+        url: product.supplier.url, // Supplier profile URL
+        platformSpecific: {} // Could store raw supplier data here if available
+      });
+    }
+
+    const supplier = supplierMap.get(supplierKey)!;
+    supplier.products.push(product);
+  });
+
+  return Array.from(supplierMap.values());
 }
 
 /**

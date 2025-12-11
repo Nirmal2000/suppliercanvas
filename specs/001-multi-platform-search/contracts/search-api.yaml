@@ -24,7 +24,7 @@ paths:
       summary: Search Alibaba suppliers
       description: |
         Proxies search requests to Alibaba's supplier search API and returns
-        normalized UnifiedProduct results.
+        normalized UnifiedSupplier results.
       operationId: searchAlibaba
       tags:
         - Search
@@ -116,7 +116,7 @@ paths:
       summary: Search Made-in-China suppliers
       description: |
         Fetches and parses Made-in-China company search results,
-        returning normalized UnifiedProduct results.
+        returning normalized UnifiedSupplier results.
       operationId: searchMadeInChina
       tags:
         - Search
@@ -276,7 +276,7 @@ paths:
 
 components:
   schemas:
-    UnifiedProduct:
+    UnifiedSupplier:
       type: object
       required:
         - id
@@ -392,7 +392,7 @@ components:
         results:
           type: array
           items:
-            $ref: '#/components/schemas/UnifiedProduct'
+            $ref: '#/components/schemas/UnifiedSupplier'
         totalCount:
           type: integer
           description: Total available results (if known)

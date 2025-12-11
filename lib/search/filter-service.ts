@@ -1,6 +1,6 @@
-import { UnifiedProduct, FilterValue, FilterDefinition } from '@/lib/platforms/types';
+import { UnifiedSupplier, FilterValue, FilterDefinition } from '@/lib/platforms/types';
 
-export function applyFilters(products: UnifiedProduct[], filters: FilterValue[]): UnifiedProduct[] {
+export function applyFilters(products: UnifiedSupplier[], filters: FilterValue[]): UnifiedSupplier[] {
     if (!filters.length) return products;
 
     return products.filter((product) => {
@@ -12,7 +12,7 @@ export function applyFilters(products: UnifiedProduct[], filters: FilterValue[])
     });
 }
 
-function checkFilterMatch(product: UnifiedProduct, filter: FilterValue): boolean {
+function checkFilterMatch(product: UnifiedSupplier, filter: FilterValue): boolean {
     const { filterId, value } = filter;
 
     // Alibaba Filters

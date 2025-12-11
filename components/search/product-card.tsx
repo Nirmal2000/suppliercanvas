@@ -1,13 +1,13 @@
 'use client';
 
-import { UnifiedProduct } from '@/lib/platforms/types';
+import { UnifiedSupplier } from '@/lib/platforms/types';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { MapPin } from 'lucide-react';
 
 interface ProductCardProps {
-  product: UnifiedProduct;
+  product: UnifiedSupplier;
   onClick: () => void;
 }
 

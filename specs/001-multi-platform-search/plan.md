@@ -119,14 +119,14 @@ components/
 
 lib/
 ├── platforms/                    # Platform integration layer (NEW)
-│   ├── types.ts                  # UnifiedProduct, PlatformAdapter interfaces
+│   ├── types.ts                  # UnifiedSupplier, PlatformAdapter interfaces
 │   ├── alibaba/
 │   │   ├── adapter.ts            # Alibaba implementation of PlatformAdapter
-│   │   ├── mapper.ts             # Maps Alibaba API response to UnifiedProduct
+│   │   ├── mapper.ts             # Maps Alibaba API response to UnifiedSupplier
 │   │   └── types.ts              # Alibaba-specific types
 │   ├── madeinchina/
 │   │   ├── adapter.ts            # Made-in-China implementation
-│   │   ├── mapper.ts             # Maps MIC response to UnifiedProduct
+│   │   ├── mapper.ts             # Maps MIC response to UnifiedSupplier
 │   │   └── types.ts              # MIC-specific types
 │   └── registry.ts               # Platform registry for easy extensibility
 ├── search/                       # Search orchestration (NEW)

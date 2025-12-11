@@ -1,6 +1,6 @@
 'use client';
 
-import { UnifiedProduct } from '@/lib/platforms/types';
+import { UnifiedSupplier } from '@/lib/platforms/types';
 import {
   Sheet,
   SheetContent,
@@ -26,7 +26,7 @@ import {
 import { useState } from 'react';
 
 interface ProductDetailSheetProps {
-  product: UnifiedProduct | null;
+  product: UnifiedSupplier | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -47,32 +47,32 @@ export function ProductDetailSheet({
   // Alibaba-specific data
   const alibabaData = product.platform === 'alibaba'
     ? (product.platformSpecific as {
-        reviewScore?: string;
-        reviewCount?: number;
-        onTimeDelivery?: string;
-        replyAvgTime?: string;
-        reorderRate?: string;
-        onlineRevenue?: string;
-        mainProducts?: Array<{ name: string; count: number | null }>;
-        products?: Array<{
-          productId: string;
-          productImg: string;
-          price: string;
-          moq: string;
-          action: string;
-        }>;
-      })
+      reviewScore?: string;
+      reviewCount?: number;
+      onTimeDelivery?: string;
+      replyAvgTime?: string;
+      reorderRate?: string;
+      onlineRevenue?: string;
+      mainProducts?: Array<{ name: string; count: number | null }>;
+      products?: Array<{
+        productId: string;
+        productImg: string;
+        price: string;
+        moq: string;
+        action: string;
+      }>;
+    })
     : null;
 
   // Made-in-China-specific data
   const micData = product.platform === 'madeinchina'
     ? (product.platformSpecific as {
-        mainProducts?: string[];
-        certifications?: string;
-        capabilityStars?: number;
-        productList?: string[];
-        inquiryUrl?: string;
-      })
+      mainProducts?: string[];
+      certifications?: string;
+      capabilityStars?: number;
+      productList?: string[];
+      inquiryUrl?: string;
+    })
     : null;
 
   return (
@@ -117,11 +117,10 @@ export function ProductDetailSheet({
                     <button
                       key={idx}
                       onClick={() => setSelectedImageIndex(idx)}
-                      className={`relative flex-shrink-0 w-20 h-20 rounded-md overflow-hidden border-2 transition-colors ${
-                        idx === selectedImageIndex
+                      className={`relative flex-shrink-0 w-20 h-20 rounded-md overflow-hidden border-2 transition-colors ${idx === selectedImageIndex
                           ? 'border-primary'
                           : 'border-transparent hover:border-muted-foreground'
-                      }`}
+                        }`}
                     >
                       <Image
                         src={img}

@@ -29,7 +29,8 @@ export function parseMICHTML(html: string, keyword: string, page: number): MICSe
 
 function extractCompany($: CheerioAPI, element: Element, index: number): MICCompany | null {
   const container = $(element);
-  const companyLink = container.find('h2.company-name a').first();
+  // Try multiple selectors for company name (Product search view vs Supplier search view)
+  const companyLink = container.find('.company-name-txt a, h2.company-name a').first();
   const companyName = companyLink.text().trim();
 
   if (!companyName) {
@@ -49,7 +50,15 @@ function extractCompany($: CheerioAPI, element: Element, index: number): MICComp
   const isAuditedSupplier = hasAuditedBadge(container);
   const inquiryUrl = normalizeUrl(container.find('a.contact-btn').first().attr('href')) || null;
   const chatId = container.find('b.tm3_chat_status').attr('cid') || null;
-  const productList = extractProducts($, container);
+
+  // Extract products: try to find a list (Supplier view) or fall back to the main product (Product view)
+  let productList = extractProducts($, container);
+  if (productList.length === 0) {
+    const mainProduct = extractMainProductFromNode($, container);
+    if (mainProduct) {
+      productList = [mainProduct];
+    }
+  }
   const productImages = Array.from(new Set(productList.map((product) => product.image).filter(Boolean))) as string[];
   const normalizedImages = productImages
     .map((image) => normalizeUrl(image))
@@ -110,6 +119,27 @@ function extractLocation($: CheerioAPI, container: Cheerio<Element>): { city?: s
   let city: string | undefined;
   let province: string | undefined;
 
+
+  // Strategy 1: Check .company-address-detail (Product search view)
+  const addressDetail = container.find('.company-address-detail, .company-address-info .tip-address .tip-para').first().text().trim();
+  if (addressDetail) {
+    // Often format is "State, Country" or "City, State, Country"
+    const parts = addressDetail.split(',').map(s => s.trim());
+    if (parts.length >= 2) {
+      // Assume last is country, second to last is province/state, third to last is city
+      // But here we need city/province.
+      // Let's just take the first part as location mostly
+      if (parts.length > 1) province = parts[parts.length - 2];
+      // This is approximate, but better than nothing
+    }
+    // If we can't parse strictly, we might just leave them undefined or try to parse "Guangdong, China" -> Province: Guangdong
+    const chinaIndex = parts.indexOf('China');
+    if (chinaIndex > 0) {
+      province = parts[chinaIndex - 1];
+    }
+  }
+
+  // Strategy 2: Check .company-intro table (Supplier search view)
   container.find('.company-intro tr').each((_, row) => {
     const rowEl = $(row);
     const cells = rowEl.find('td');
@@ -128,9 +158,33 @@ function extractLocation($: CheerioAPI, container: Cheerio<Element>): { city?: s
   return { city, province };
 }
 
+function extractMainProductFromNode($: CheerioAPI, container: Cheerio<Element>): MICProductSummary | null {
+  const titleLink = container.find('h2.product-name a').first();
+  const name = titleLink.text().trim();
+  const url = normalizeUrl(titleLink.attr('href'));
+
+  if (!name || !url) return null;
+
+  // Try to find the first image in the swiper or main image container
+  const imageEl = container.find('.prod-img .img-thumb-inner img').first();
+  const image = normalizeUrl(imageEl.attr('data-original') || imageEl.attr('src'));
+
+  return {
+    name,
+    url,
+    image: image || undefined
+  };
+}
+
 function extractBusinessType($: CheerioAPI, container: Cheerio<Element>): string | null {
   let businessType: string | null = null;
 
+
+  // Strategy 1: Check .company-tag (Product search view)
+  const tagText = container.find('.company-tag .tag-list').first().text().trim();
+  if (tagText) return tagText;
+
+  // Strategy 2: Check .company-intro (Supplier search view)
   container.find('.company-intro tr').each((_, row) => {
     const rowEl = $(row);
     const cells = rowEl.find('td');

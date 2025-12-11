@@ -1,0 +1,263 @@
+{
+  "success": "boolean",
+  "model": {
+    "offers": [
+      {
+        "action": "string",
+        "companyId": "string",
+        "companyName": "string",
+        "companyTitle": "string",
+        "companyIcon": "string",
+        "companyImage": [
+          "string",
+          "unknown"
+        ],
+        "newAd": "boolean",
+        "adInfo": {
+          "ext": "string",
+          "multiTemplate": [
+            {
+              "layout": "string",
+              "pcName": "string",
+              "width": "string",
+              "height": "string",
+              "tags": [
+                "string"
+              ]
+            }
+          ],
+          "campaignType": "string",
+          "elementScene": "boolean",
+          "immersion": "boolean",
+          "campaignId": "string",
+          "adgroupId": "string",
+          "creativeInfo": {
+            "viewProfileText": "string",
+            "mainProduct": {
+              "subject": "string",
+              "imageUrl": "string",
+              "action": "string",
+              "id": "number",
+              "title": "string"
+            },
+            "tpText": "string",
+            "products": [
+              {
+                "subject": "string",
+                "imageUrl": "string",
+                "action": "string",
+                "id": "number",
+                "title": "string"
+              }
+            ]
+          },
+          "templateId": "string",
+          "creativeId": "string"
+        },
+        "goldYearsNumber": "string",
+        "goldYears": "string",
+        "verifiedSupplier": "boolean",
+        "verifiedSupplierPro": "boolean",
+        "countryCode": "string",
+        "city": "string",
+        "isFactory": "boolean",
+        "reviewScore": "string",
+        "reviewCount": "number",
+        "reviewLink": "string",
+        "onTimeDelivery": "string",
+        "replyAvgTime": "string",
+        "reorderRate": "string",
+        "onlineRevenue": "string",
+        "contactSupplier": "string",
+        "tmlid": "string",
+        "chatToken": "string",
+        "mainProducts": [
+          {
+            "name": "string",
+            "count": "null"
+          }
+        ],
+        "productList": [
+          {
+            "action": "string",
+            "productId": "string",
+            "productImg": "string",
+            "price": "string",
+            "moq": "string",
+            "traceCommonArgs": {
+              "is_customizable": "string",
+              "productId": "string",
+              "item_type": "string",
+              "semiManaged": "string",
+              "pid": "string",
+              "is_half_trust_instant_order": "string",
+              "showAd": "string",
+              "companyId": "number",
+              "product_type": "null",
+              "rlt_rank": "string",
+              "isCommon": "string",
+              "traceInfoStr": "string",
+              "is_half_trust_customizable": "string"
+            },
+            "cateId": "string",
+            "itemType": "null"
+          }
+        ],
+        "clickEurl": "string",
+        "impsEurl": "string",
+        "trackInfo": "string",
+        "traceCommonArgs": {
+          "companyId": "string",
+          "isManufacture": "string",
+          "productId": [
+            "string",
+            "null"
+          ],
+          "item_type": "string",
+          "rank": "number",
+          "pid": "string",
+          "trackInfo_detail": "string"
+        },
+        "areaNumber": "string",
+        "factoryCertificationType": "string",
+        "factoryCertificationLabel": "string",
+        "certIconList": [
+          {
+            "name": "string",
+            "image": "string"
+          }
+        ],
+        "tagList": [
+          "string"
+        ],
+        "videoUrl": "string",
+        "videoPoster": "string",
+        "customizationOptions": [
+          "string"
+        ]
+      }
+    ],
+    "filterData": [
+      {
+        "defaultCollapsed": "boolean",
+        "postSort": "number",
+        "descTipMaxExpandCount": "number",
+        "descTipFixExpanded": "boolean",
+        "itemsScroll": "boolean",
+        "groupId": "string",
+        "values": [
+          {
+            "postSort": "number",
+            "queryKey": "string",
+            "hasCountryFlag": "boolean",
+            "back": "boolean",
+            "noXpjax": "boolean",
+            "uniqKey": "string",
+            "name": "string",
+            "preSort": "number",
+            "checked": "boolean",
+            "iconUrl": "string",
+            "value": "string",
+            "key": "string",
+            "desc": "string"
+          },
+          {
+            "postSort": "number",
+            "queryKey": "string",
+            "hasCountryFlag": "boolean",
+            "back": "boolean",
+            "noXpjax": "boolean",
+            "type": "string",
+            "hovertipDesc": "string",
+            "uniqKey": "string",
+            "name": "string",
+            "preSort": "number",
+            "checked": "boolean",
+            "iconUrl": "string",
+            "id": "string",
+            "hovertipTitle": "string",
+            "value": "string",
+            "key": "string"
+          },
+          {
+            "postSort": "number",
+            "queryKey": "string",
+            "uniqKey": "string",
+            "hasCountryFlag": "boolean",
+            "name": "string",
+            "preSort": "number",
+            "back": "boolean",
+            "checked": "boolean",
+            "noXpjax": "boolean",
+            "value": "string",
+            "key": "string"
+          },
+          {
+            "postSort": "number",
+            "queryKey": "string",
+            "uniqKey": "string",
+            "hasCountryFlag": "boolean",
+            "name": "string",
+            "preSort": "number",
+            "back": "boolean",
+            "checked": "boolean",
+            "iconUrl": "string",
+            "noXpjax": "boolean",
+            "value": "string",
+            "key": "string"
+          }
+        ],
+        "preSort": "number",
+        "hasSearch": "boolean",
+        "type": "string",
+        "title": "string",
+        "desc": "string",
+        "searchText": "string",
+        "inputValue": {
+          "to": {
+            "queryKey": "string",
+            "uniqKey": "string",
+            "placeholder": "string",
+            "value": "string",
+            "key": "string"
+          }
+        }
+      }
+    ],
+    "paginationData": {
+      "currentPage": "number",
+      "totalPage": "number",
+      "totalCount": "number"
+    },
+    "globalCommonTrace": {
+      "dynamic_tag": "string",
+      "traceId": "string",
+      "terminal_type": "string",
+      "p4pid": "string",
+      "requestGlobalId": "string",
+      "searchType": "string",
+      "total_count": "string",
+      "result_number": "string",
+      "bizSceneCode": "string",
+      "rlabRecallId": "string",
+      "pageid": "string",
+      "env": "string",
+      "identityCode": "string",
+      "enKeyword": "string",
+      "traceFormat": "string",
+      "oriKeyWord": "string",
+      "page_number": "string",
+      "userInputKeyword": "string",
+      "langident": "string",
+      "openSceneId": "null",
+      "country_id": "string"
+    },
+    "queryRisk": {
+      "riskReject": "boolean",
+      "is18Restrict": "boolean",
+      "eighteenRestrictText": "null"
+    }
+  },
+  "msgCode": "null",
+  "msgInfo": "null"
+}
