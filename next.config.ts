@@ -3,6 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   cacheComponents: true,
   images: {
+    unoptimized: true, // Bypass optimization to avoid private IP resolution issues in dev/VPN
     remotePatterns: [
       {
         protocol: 'https',

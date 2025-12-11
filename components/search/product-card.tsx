@@ -24,18 +24,34 @@ export function ProductCard({ product, onClick }: ProductCardProps) {
       data-testid="product-card"
     >
       <CardHeader className="p-0">
-        <div className="relative aspect-square overflow-hidden rounded-t-lg bg-muted">
-          <Image
-            src={primaryImage}
-            alt={product.name}
-            fill
-            className="object-cover group-hover:scale-105 transition-transform duration-300"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.src = '/placeholder-product.png';
-            }}
-          />
+        <div className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide no-scrollbar h-full w-full">
+          {product.images.length > 0 ? (
+            product.images.map((image, index) => (
+              <div key={index} className="relative flex-none w-full h-full snap-center">
+                <Image
+                  src={image}
+                  alt={`${product.name} - Image ${index + 1}`}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = '/placeholder-product.png';
+                  }}
+                />
+              </div>
+            ))
+          ) : (
+            <div className="relative w-full h-full">
+              <Image
+                src="/placeholder-product.png"
+                alt={product.name}
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+              />
+            </div>
+          )}
         </div>
       </CardHeader>
       <CardContent className="p-4">

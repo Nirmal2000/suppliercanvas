@@ -3,6 +3,8 @@
 Auto-generated from all feature plans. Last updated: 2025-12-10
 
 ## Active Technologies
+- TypeScript 5.x with Next.js 15.3.1 (001-agent-search)
+- Client-side only (chat history not persisted, lost on reload) (001-agent-search)
 
 - TypeScript 5.x with Next.js (latest/15.3.1) (001-multi-platform-search)
 
@@ -22,6 +24,7 @@ npm test && npm run lint
 TypeScript 5.x with Next.js (latest/15.3.1): Follow standard conventions
 
 ## Recent Changes
+- 001-agent-search: Added TypeScript 5.x with Next.js 15.3.1
 
 - 001-multi-platform-search: Added TypeScript 5.x with Next.js (latest/15.3.1)
 
