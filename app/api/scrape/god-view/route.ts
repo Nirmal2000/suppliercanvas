@@ -4,7 +4,7 @@ import { getCachedHtml, setCachedHtml } from '@/lib/scrapers/firecrawl-cache';
 
 // Reusing the same Firecrawl configuration
 const FIRECRAWL_API_URL = 'https://api.firecrawl.dev/v2/scrape';
-const FIRECRAWL_API_KEY = 'fc-102ab0c2a1d6406696e1eb6ecdf1a7cb';
+const FIRECRAWL_API_KEY = process.env.FIRECRAWL_API_KEY || '';
 
 interface GodViewRequest {
     urls: string[];
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
                                     if (data.success && data.data?.html) {
                                         html = data.data.html;
                                         // Cache the result
-                                        await setCachedHtml(searchUrl, html);
+                                        await setCachedHtml(searchUrl, html || '');
                                     }
                                 }
                             }

@@ -5,7 +5,7 @@ import { ProductDetail } from '@/lib/scrapers/mic-types';
 
 // Reusing the same Firecrawl configuration
 const FIRECRAWL_API_URL = 'https://api.firecrawl.dev/v2/scrape';
-const FIRECRAWL_API_KEY = 'fc-102ab0c2a1d6406696e1eb6ecdf1a7cb';
+const FIRECRAWL_API_KEY = process.env.FIRECRAWL_API_KEY || '';
 
 export async function POST(request: NextRequest) {
     try {
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
             const data = await response.json();
             if (data.success && data.data?.html) {
                 html = data.data.html;
-                await setCachedHtml(url, html);
+                await setCachedHtml(url, html || '');
             } else {
                 return NextResponse.json({ error: 'Failed to retrieve HTML' }, { status: 500 });
             }

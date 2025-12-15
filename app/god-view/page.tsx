@@ -109,31 +109,105 @@ export default function SupplierGodView() {
     const handleSelectAll = () => setSelectedUrls(new Set(products.map(p => p.url)));
     const handleClearSelection = () => setSelectedUrls(new Set());
 
-    const handleExportCsv = () => {
+    // --- Export Logic ---
+    const [isExporting, setIsExporting] = useState(false);
+    const [exportProgress, setExportProgress] = useState('');
+
+    const handleExportCsv = async () => {
         const productsToExport = products.filter(p => selectedUrls.has(p.url));
         if (productsToExport.length === 0) return;
 
-        const headers = ['URL', 'Title', 'Model No.'];
-        const rows = productsToExport.map(p => [
-            p.url,
-            `"${p.title.replace(/"/g, '""')}"`,
-            p.modelNo ? `"${p.modelNo.replace(/"/g, '""')}"` : ''
-        ]);
+        setIsExporting(true);
+        setExportProgress(`0/${productsToExport.length}`);
 
-        const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `supplier_products_${new Date().toISOString().slice(0, 10)}.csv`;
-        link.click();
+        // Create a copy of the current products to update state as we go
+        // We'll also use this list for the final CSV generation to ensure we have the latest data
+        const enrichedProducts = [...productsToExport];
+        let completed = 0;
+
+        try {
+            for (let i = 0; i < enrichedProducts.length; i++) {
+                const product = enrichedProducts[i];
+
+                // Only fetch if we don't have the model number yet
+                // (Assuming modelNo is a good proxy for "details loaded")
+                if (!product.modelNo) {
+                    try {
+                        const response = await fetch('/api/scrape/mic/detail', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ url: product.url }),
+                        });
+
+                        if (response.ok) {
+                            const detail: ProductDetail = await response.json();
+
+                            // Merge details
+                            const updatedProduct = {
+                                ...product,
+                                modelNo: detail.modelNo,
+                                basicInfoHtml: detail.basicInfoHtml,
+                                attributes: detail.attributes,
+                                mediaUrls: detail.mediaUrls
+                            };
+
+                            enrichedProducts[i] = updatedProduct;
+
+                            // Update global state immediately so UI reflects progress (optional, but nice)
+                            setProducts(prev => prev.map(p => p.url === product.url ? updatedProduct : p));
+                        }
+                    } catch (e) {
+                        console.error(`Failed to fetch details for ${product.url}`, e);
+                    }
+                }
+
+                completed++;
+                setExportProgress(`${completed}/${productsToExport.length}`);
+            }
+
+            // Generate CSV with enriched data
+            const headers = ['URL', 'Title', 'Model No.', 'Supplier', 'Keyword', 'Price', 'MOQ'];
+            const rows = enrichedProducts.map(p => [
+                p.url,
+                `"${p.title.replace(/"/g, '""')}"`,
+                p.modelNo ? `"${p.modelNo.replace(/"/g, '""')}"` : '',
+                `"${p.metadata.supplierUrl.replace(/^https?:\/\//, '').split('.')[0]}"`, // Extract supplier name
+                `"${p.metadata.searchKeyword.replace(/"/g, '""')}"`,
+                p.price ? `"${p.price}"` : '',
+                p.moq ? `"${p.moq}"` : '',
+            ]);
+
+            const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `supplier_products_${new Date().toISOString().slice(0, 10)}.csv`;
+            link.click();
+
+        } catch (e) {
+            console.error('Export failed', e);
+            setError('Export failed. Check console for details.');
+        } finally {
+            setIsExporting(false);
+            setExportProgress('');
+        }
     };
 
     // --- Detail Fetching ---
     const handleCardClick = async (product: Product) => {
+        // If in selection mode (at least one item selected), toggling click behavior
+        if (selectedUrls.size > 0) {
+            toggleSelection(product.url);
+            return;
+        }
+
         setSelectedProduct(product);
         setIsSheetOpen(true);
         setIsDetailLoading(true);
         setDetailError(null);
+
+        // If we already have full details, we might skip fetching, but for now we re-fetch to be safe
+        // In a clearer implementation, we checked if (product.basicInfoHtml) return;
 
         try {
             const response = await fetch('/api/scrape/mic/detail', {
@@ -177,7 +251,7 @@ export default function SupplierGodView() {
             <div className="flex flex-wrap gap-4 mb-8 items-center">
                 <button
                     onClick={handleScrape}
-                    disabled={isLoading}
+                    disabled={isLoading || isExporting}
                     className="px-8 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 font-semibold transition-colors"
                 >
                     {isLoading && page === 1 ? 'Scraping...' : 'Start Scraping'}
@@ -193,6 +267,8 @@ export default function SupplierGodView() {
                             onClear={handleClearSelection}
                             onExport={handleExportCsv}
                             hasSelection={selectedUrls.size > 0}
+                            isExporting={isExporting}
+                            exportProgress={exportProgress}
                         />
                     </div>
                 )}
@@ -226,7 +302,7 @@ export default function SupplierGodView() {
                 <div className="flex justify-center mt-8 pb-12">
                     <button
                         onClick={handleLoadMore}
-                        disabled={isLoading}
+                        disabled={isLoading || isExporting}
                         className="px-8 py-3 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 disabled:opacity-50 font-semibold transition-colors"
                     >
                         {isLoading ? 'Loading...' : 'Load More'}
@@ -271,21 +347,21 @@ function GodViewInputs({ urls, setUrls, keywords, setKeywords }: any) {
     );
 }
 
-function SelectionToolbar({ onSelectAll, onClear, onExport, hasSelection }: any) {
+function SelectionToolbar({ onSelectAll, onClear, onExport, hasSelection, isExporting, exportProgress }: any) {
     return (
         <>
-            <button onClick={onSelectAll} className="px-4 py-2 text-sm border border-input bg-background hover:bg-accent hover:text-accent-foreground rounded-md">
+            <button onClick={onSelectAll} disabled={isExporting} className="px-4 py-2 text-sm border border-input bg-background hover:bg-accent hover:text-accent-foreground rounded-md disabled:opacity-50">
                 Select All
             </button>
-            <button onClick={onClear} className="px-4 py-2 text-sm border border-input bg-background hover:bg-accent hover:text-accent-foreground rounded-md">
+            <button onClick={onClear} disabled={isExporting} className="px-4 py-2 text-sm border border-input bg-background hover:bg-accent hover:text-accent-foreground rounded-md disabled:opacity-50">
                 Clear
             </button>
             <button
                 onClick={onExport}
-                disabled={!hasSelection}
-                className="px-4 py-2 text-sm bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-md disabled:opacity-50"
+                disabled={!hasSelection || isExporting}
+                className="px-4 py-2 text-sm bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-md disabled:opacity-50 min-w-[100px]"
             >
-                Export CSV
+                {isExporting ? `Fetching (${exportProgress})...` : 'Export CSV'}
             </button>
         </>
     );
