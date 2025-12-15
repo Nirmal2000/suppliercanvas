@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Product, ProductDetail } from '@/lib/scrapers/mic-types';
 import { ProductCard } from '@/components/god-view/product-card';
 import { ProductDetailSheet } from '@/components/god-view/product-detail-sheet';
@@ -8,7 +8,11 @@ import { ProductDetailSheet } from '@/components/god-view/product-detail-sheet';
 export default function SupplierGodView() {
     const [urls, setUrls] = useState('');
     const [keywords, setKeywords] = useState('');
-    const [products, setProducts] = useState<Product[]>([]);
+
+    // Bucket state: Map<SupplierURL, Product[]>
+    // We use a Record where key is the "Supplier URL" to group products
+    const [supplierBuckets, setSupplierBuckets] = useState<Record<string, Product[]>>({});
+
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [page, setPage] = useState(1);
@@ -23,12 +27,46 @@ export default function SupplierGodView() {
     const [isDetailLoading, setIsDetailLoading] = useState(false);
     const [detailError, setDetailError] = useState<string | null>(null);
 
+    // --- Interleaving Logic ---
+    // Computed property: "Zipped" list of products
+    // We iterate 0..max, picking the i-th item from each bucket in a round-robin fashion
+    const products = useMemo(() => {
+        const buckets = Object.values(supplierBuckets);
+        const maxLen = Math.max(...buckets.map(b => b.length), 0);
+        const result: Product[] = [];
+        const seenUrls = new Set<string>();
+
+        for (let i = 0; i < maxLen; i++) {
+            for (const bucket of buckets) {
+                if (i < bucket.length) {
+                    const product = bucket[i];
+                    // Deduplication: Only add if we haven't seen this URL yet
+                    if (!seenUrls.has(product.url)) {
+                        seenUrls.add(product.url);
+                        result.push(product);
+                    }
+                }
+            }
+        }
+        return result;
+    }, [supplierBuckets]);
+
+    // Helpers
+    const getSupplierKey = (url: string) => {
+        try {
+            // Normalize: remove protocol found in metadata usually
+            return url.replace(/^https?:\/\//, '').split('/')[0];
+        } catch {
+            return 'unknown';
+        }
+    };
+
     // --- Scraping Logic ---
     const fetchProducts = async (pageToFetch: number, isNewSearch: boolean) => {
         setIsLoading(true);
         setError(null);
         if (isNewSearch) {
-            setProducts([]);
+            setSupplierBuckets({});
             setPage(1);
             setHasMore(true);
             setSelectedUrls(new Set());
@@ -70,10 +108,21 @@ export default function SupplierGodView() {
                 for (const line of lines) {
                     if (line.trim()) {
                         try {
-                            const newProducts = JSON.parse(line);
+                            const newProducts: Product[] = JSON.parse(line);
                             if (newProducts.length > 0) {
                                 productsFoundInThisFetch = true;
-                                setProducts(prev => [...prev, ...newProducts]);
+
+                                setSupplierBuckets(prev => {
+                                    const next = { ...prev };
+
+                                    newProducts.forEach(p => {
+                                        const supplierKey = p.metadata.supplierUrl || 'unknown';
+                                        if (!next[supplierKey]) next[supplierKey] = [];
+                                        next[supplierKey].push(p);
+                                    });
+
+                                    return next;
+                                });
                             }
                         } catch (e) {
                             console.error('Error parsing JSON chunk:', e);
@@ -121,8 +170,8 @@ export default function SupplierGodView() {
         setExportProgress(`0/${productsToExport.length}`);
 
         // Create a copy of the current products to update state as we go
-        // We'll also use this list for the final CSV generation to ensure we have the latest data
-        const enrichedProducts = [...productsToExport];
+        // We clone deep to avoid mutating the derived state directly
+        const enrichedProducts = JSON.parse(JSON.stringify(productsToExport));
         let completed = 0;
 
         try {
@@ -153,8 +202,16 @@ export default function SupplierGodView() {
 
                             enrichedProducts[i] = updatedProduct;
 
-                            // Update global state immediately so UI reflects progress (optional, but nice)
-                            setProducts(prev => prev.map(p => p.url === product.url ? updatedProduct : p));
+                            // Update global state -- tricky part with buckets
+                            // We find the product in the buckets and update it
+                            const supplierKey = product.metadata.supplierUrl || 'unknown';
+                            setSupplierBuckets(prev => {
+                                const bucket = prev[supplierKey];
+                                if (!bucket) return prev;
+
+                                const nextBucket = bucket.map(p => p.url === product.url ? updatedProduct : p);
+                                return { ...prev, [supplierKey]: nextBucket };
+                            });
                         }
                     } catch (e) {
                         console.error(`Failed to fetch details for ${product.url}`, e);
@@ -167,7 +224,7 @@ export default function SupplierGodView() {
 
             // Generate CSV with enriched data
             const headers = ['URL', 'Title', 'Model No.', 'Supplier', 'Keyword', 'Price', 'MOQ'];
-            const rows = enrichedProducts.map(p => [
+            const rows = enrichedProducts.map((p: any) => [
                 p.url,
                 `"${p.title.replace(/"/g, '""')}"`,
                 p.modelNo ? `"${p.modelNo.replace(/"/g, '""')}"` : '',
@@ -177,7 +234,7 @@ export default function SupplierGodView() {
                 p.moq ? `"${p.moq}"` : '',
             ]);
 
-            const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+            const csvContent = [headers.join(','), ...rows.map((r: any) => r.join(','))].join('\n');
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
@@ -228,7 +285,17 @@ export default function SupplierGodView() {
                 mediaUrls: detail.mediaUrls
             };
             setSelectedProduct(updatedProduct);
-            setProducts(prev => prev.map(p => p.url === product.url ? updatedProduct : p));
+
+            // Update buckets
+            const supplierKey = product.metadata.supplierUrl || 'unknown';
+            setSupplierBuckets(prev => {
+                const bucket = prev[supplierKey];
+                if (!bucket) return prev;
+
+                const nextBucket = bucket.map(p => p.url === product.url ? updatedProduct : p);
+                return { ...prev, [supplierKey]: nextBucket };
+            });
+
 
         } catch (err) {
             setDetailError(err instanceof Error ? err.message : 'Failed to load details');
@@ -281,7 +348,7 @@ export default function SupplierGodView() {
             )}
 
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8">
-                {products.map((product, index) => (
+                {products.map((product: Product, index: number) => (
                     <ProductCard
                         key={`${product.url}-${index}`}
                         product={product}
