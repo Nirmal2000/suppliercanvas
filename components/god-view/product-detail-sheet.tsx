@@ -1,7 +1,6 @@
 'use client';
 
 import { Product } from '@/lib/scrapers/mic-types';
-import { useState, useEffect } from 'react';
 import {
     Sheet,
     SheetContent,
@@ -19,27 +18,6 @@ interface ProductDetailSheetProps {
 }
 
 export function ProductDetailSheet({ open, onOpenChange, product, isLoading, error }: ProductDetailSheetProps) {
-    const [activeImage, setActiveImage] = useState<string>('');
-
-    // Reset active image when product changes
-    useEffect(() => {
-        if (product) {
-            setActiveImage(product.image);
-        }
-    }, [product]);
-
-    // Update active image if mediaUrls load and we're currently showing the default one (or nothing)
-    useEffect(() => {
-        if (product?.mediaUrls && product.mediaUrls.length > 0) {
-            // Keep the current active image if it's in the new list, otherwise default to first
-            const isCurrentInList = product.mediaUrls.includes(activeImage);
-            if (!isCurrentInList && activeImage === product.image) {
-                setActiveImage(product.mediaUrls[0]);
-            }
-        }
-    }, [product?.mediaUrls, activeImage, product?.image]);
-
-
     if (!product) return null;
 
     // Use mediaUrls if available, otherwise just the single main image
@@ -70,40 +48,23 @@ export function ProductDetailSheet({ open, onOpenChange, product, isLoading, err
                 {/* Scrollable Content */}
                 <div className="flex-1 overflow-y-auto p-6 space-y-8">
 
-                    {/* Gallery Section */}
-                    <div className="space-y-4">
-                        {/* Main Image */}
-                        <div className="aspect-square w-full rounded-xl overflow-hidden border bg-muted relative">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                                key={activeImage} // Force re-render on change for animation if needed
-                                src={activeImage}
-                                alt={product.title}
-                                className="w-full h-full object-contain"
-                                onError={(e) => {
-                                    (e.target as HTMLImageElement).src = 'https://placehold.co/600?text=Image+Load+Error';
-                                }}
-                            />
+                    {/* Gallery Section - Horizontal Scroll */}
+                    <div className="w-full">
+                        <div className="flex gap-4 overflow-x-auto pb-4 snap-x scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
+                            {images.map((img, idx) => (
+                                <div key={idx} className="flex-shrink-0 w-[280px] h-[280px] rounded-xl overflow-hidden border bg-muted relative snap-center">
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img
+                                        src={img}
+                                        alt={`${product.title} - ${idx + 1}`}
+                                        className="w-full h-full object-contain bg-white"
+                                        onError={(e) => {
+                                            (e.target as HTMLImageElement).src = 'https://placehold.co/600?text=Image+Load+Error';
+                                        }}
+                                    />
+                                </div>
+                            ))}
                         </div>
-
-                        {/* Thumbnail Strip */}
-                        {images.length > 1 && (
-                            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide snap-x">
-                                {images.map((img, idx) => (
-                                    <button
-                                        key={idx}
-                                        onClick={() => setActiveImage(img)}
-                                        className={`relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all snap-start ${activeImage === img
-                                            ? 'border-primary ring-2 ring-primary/20'
-                                            : 'border-transparent opacity-70 hover:opacity-100 hover:border-border'
-                                            }`}
-                                    >
-                                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                                        <img src={img} alt={`View ${idx + 1}`} className="w-full h-full object-cover" />
-                                    </button>
-                                ))}
-                            </div>
-                        )}
                     </div>
 
                     {/* Loading & Error States */}

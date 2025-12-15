@@ -9,9 +9,10 @@ export default function SupplierGodView() {
     const [urls, setUrls] = useState('');
     const [keywords, setKeywords] = useState('');
 
-    // Bucket state: Map<SupplierURL, Product[]>
-    // We use a Record where key is the "Supplier URL" to group products
-    const [supplierBuckets, setSupplierBuckets] = useState<Record<string, Product[]>>({});
+    // Bucket state: Map<TaskKey, Product[]>
+    // Key format: "${supplierUrl}::${keyword}"
+    // This allows us to interleave results from EVERY unique search task (e.g. Supplier A + Sofa, Supplier A + Chair, etc.)
+    const [taskBuckets, setTaskBuckets] = useState<Record<string, Product[]>>({});
 
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -31,7 +32,7 @@ export default function SupplierGodView() {
     // Computed property: "Zipped" list of products
     // We iterate 0..max, picking the i-th item from each bucket in a round-robin fashion
     const products = useMemo(() => {
-        const buckets = Object.values(supplierBuckets);
+        const buckets = Object.values(taskBuckets);
         const maxLen = Math.max(...buckets.map(b => b.length), 0);
         const result: Product[] = [];
         const seenUrls = new Set<string>();
@@ -49,16 +50,13 @@ export default function SupplierGodView() {
             }
         }
         return result;
-    }, [supplierBuckets]);
+    }, [taskBuckets]);
 
     // Helpers
-    const getSupplierKey = (url: string) => {
-        try {
-            // Normalize: remove protocol found in metadata usually
-            return url.replace(/^https?:\/\//, '').split('/')[0];
-        } catch {
-            return 'unknown';
-        }
+    const getTaskKey = (product: Product) => {
+        const supplier = product.metadata.supplierUrl || 'unknown';
+        const keyword = product.metadata.searchKeyword || 'unknown';
+        return `${supplier}::${keyword}`;
     };
 
     // --- Scraping Logic ---
@@ -66,7 +64,7 @@ export default function SupplierGodView() {
         setIsLoading(true);
         setError(null);
         if (isNewSearch) {
-            setSupplierBuckets({});
+            setTaskBuckets({});
             setPage(1);
             setHasMore(true);
             setSelectedUrls(new Set());
@@ -112,13 +110,13 @@ export default function SupplierGodView() {
                             if (newProducts.length > 0) {
                                 productsFoundInThisFetch = true;
 
-                                setSupplierBuckets(prev => {
+                                setTaskBuckets(prev => {
                                     const next = { ...prev };
 
                                     newProducts.forEach(p => {
-                                        const supplierKey = p.metadata.supplierUrl || 'unknown';
-                                        if (!next[supplierKey]) next[supplierKey] = [];
-                                        next[supplierKey].push(p);
+                                        const key = getTaskKey(p);
+                                        if (!next[key]) next[key] = [];
+                                        next[key].push(p);
                                     });
 
                                     return next;
@@ -204,13 +202,13 @@ export default function SupplierGodView() {
 
                             // Update global state -- tricky part with buckets
                             // We find the product in the buckets and update it
-                            const supplierKey = product.metadata.supplierUrl || 'unknown';
-                            setSupplierBuckets(prev => {
-                                const bucket = prev[supplierKey];
+                            const key = getTaskKey(product);
+                            setTaskBuckets(prev => {
+                                const bucket = prev[key];
                                 if (!bucket) return prev;
 
                                 const nextBucket = bucket.map(p => p.url === product.url ? updatedProduct : p);
-                                return { ...prev, [supplierKey]: nextBucket };
+                                return { ...prev, [key]: nextBucket };
                             });
                         }
                     } catch (e) {
@@ -287,13 +285,13 @@ export default function SupplierGodView() {
             setSelectedProduct(updatedProduct);
 
             // Update buckets
-            const supplierKey = product.metadata.supplierUrl || 'unknown';
-            setSupplierBuckets(prev => {
-                const bucket = prev[supplierKey];
+            const key = getTaskKey(product);
+            setTaskBuckets(prev => {
+                const bucket = prev[key];
                 if (!bucket) return prev;
 
                 const nextBucket = bucket.map(p => p.url === product.url ? updatedProduct : p);
-                return { ...prev, [supplierKey]: nextBucket };
+                return { ...prev, [key]: nextBucket };
             });
 
 
