@@ -1,7 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Product } from '@/lib/scrapers/mic-types';
+import { Product, ProductDetail } from '@/lib/scrapers/mic-types';
+import { ProductCard } from '@/components/god-view/product-card';
+import { ProductDetailSheet } from '@/components/god-view/product-detail-sheet';
 
 export default function SupplierGodView() {
     const [urls, setUrls] = useState('');
@@ -12,6 +14,16 @@ export default function SupplierGodView() {
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
 
+    // Selection state
+    const [selectedUrls, setSelectedUrls] = useState<Set<string>>(new Set());
+
+    // Detail Sheet state
+    const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+    const [isSheetOpen, setIsSheetOpen] = useState(false);
+    const [isDetailLoading, setIsDetailLoading] = useState(false);
+    const [detailError, setDetailError] = useState<string | null>(null);
+
+    // --- Scraping Logic ---
     const fetchProducts = async (pageToFetch: number, isNewSearch: boolean) => {
         setIsLoading(true);
         setError(null);
@@ -19,6 +31,7 @@ export default function SupplierGodView() {
             setProducts([]);
             setPage(1);
             setHasMore(true);
+            setSelectedUrls(new Set());
         }
 
         const urlList = urls.split('\n').map(u => u.trim()).filter(u => u);
@@ -35,16 +48,11 @@ export default function SupplierGodView() {
         try {
             const response = await fetch('/api/scrape/god-view', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ urls: urlList, keywords: keywordList, page: pageToFetch }),
             });
 
-            if (!response.ok) {
-                throw new Error('Failed to start scraping');
-            }
-
+            if (!response.ok) throw new Error('Failed to start scraping');
             if (!response.body) return;
 
             const reader = response.body.getReader();
@@ -57,9 +65,7 @@ export default function SupplierGodView() {
 
                 buffer += decoder.decode(value, { stream: true });
                 const lines = buffer.split('\n');
-
-                // Process all complete lines
-                buffer = lines.pop() || ''; // Keep the incomplete line in buffer
+                buffer = lines.pop() || '';
 
                 for (const line of lines) {
                     if (line.trim()) {
@@ -76,11 +82,9 @@ export default function SupplierGodView() {
                 }
             }
 
-            // If no products were found in this entire fetch, assume we reached the end
             if (!productsFoundInThisFetch) {
                 setHasMore(false);
             } else {
-                // If successful and we found products, update current page
                 setPage(pageToFetch);
             }
 
@@ -94,38 +98,105 @@ export default function SupplierGodView() {
     const handleScrape = () => fetchProducts(1, true);
     const handleLoadMore = () => fetchProducts(page + 1, false);
 
+    // --- Selection Handlers ---
+    const toggleSelection = (url: string) => {
+        const newSelection = new Set(selectedUrls);
+        if (newSelection.has(url)) newSelection.delete(url);
+        else newSelection.add(url);
+        setSelectedUrls(newSelection);
+    };
+
+    const handleSelectAll = () => setSelectedUrls(new Set(products.map(p => p.url)));
+    const handleClearSelection = () => setSelectedUrls(new Set());
+
+    const handleExportCsv = () => {
+        const productsToExport = products.filter(p => selectedUrls.has(p.url));
+        if (productsToExport.length === 0) return;
+
+        const headers = ['URL', 'Title', 'Model No.'];
+        const rows = productsToExport.map(p => [
+            p.url,
+            `"${p.title.replace(/"/g, '""')}"`,
+            p.modelNo ? `"${p.modelNo.replace(/"/g, '""')}"` : ''
+        ]);
+
+        const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `supplier_products_${new Date().toISOString().slice(0, 10)}.csv`;
+        link.click();
+    };
+
+    // --- Detail Fetching ---
+    const handleCardClick = async (product: Product) => {
+        setSelectedProduct(product);
+        setIsSheetOpen(true);
+        setIsDetailLoading(true);
+        setDetailError(null);
+
+        try {
+            const response = await fetch('/api/scrape/mic/detail', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: product.url }),
+            });
+
+            if (!response.ok) throw new Error('Failed to fetch details');
+
+            const detail: ProductDetail = await response.json();
+
+            const updatedProduct = {
+                ...product,
+                modelNo: detail.modelNo,
+                basicInfoHtml: detail.basicInfoHtml,
+                attributes: detail.attributes,
+                mediaUrls: detail.mediaUrls
+            };
+            setSelectedProduct(updatedProduct);
+            setProducts(prev => prev.map(p => p.url === product.url ? updatedProduct : p));
+
+        } catch (err) {
+            setDetailError(err instanceof Error ? err.message : 'Failed to load details');
+        } finally {
+            setIsDetailLoading(false);
+        }
+    };
+
     return (
         <div className="min-h-screen p-8 bg-background text-foreground">
             <h1 className="text-3xl font-bold mb-8">Supplier God View</h1>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <div>
-                    <label className="block text-sm font-medium mb-2 text-foreground">Supplier URLs (one per line)</label>
-                    <textarea
-                        className="w-full h-32 p-3 border border-input bg-background rounded-lg text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
-                        placeholder="https://example.en.made-in-china.com"
-                        value={urls}
-                        onChange={(e) => setUrls(e.target.value)}
-                    />
-                </div>
-                <div>
-                    <label className="block text-sm font-medium mb-2 text-foreground">Keywords (one per line)</label>
-                    <textarea
-                        className="w-full h-32 p-3 border border-input bg-background rounded-lg text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
-                        placeholder="sofa&#10;chair"
-                        value={keywords}
-                        onChange={(e) => setKeywords(e.target.value)}
-                    />
-                </div>
-            </div>
+            <GodViewInputs
+                urls={urls}
+                setUrls={setUrls}
+                keywords={keywords}
+                setKeywords={setKeywords}
+            />
 
-            <button
-                onClick={handleScrape}
-                disabled={isLoading}
-                className="w-full md:w-auto px-8 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 font-semibold transition-colors mb-8"
-            >
-                {isLoading && page === 1 ? 'Scraping...' : 'Start Scraping'}
-            </button>
+            <div className="flex flex-wrap gap-4 mb-8 items-center">
+                <button
+                    onClick={handleScrape}
+                    disabled={isLoading}
+                    className="px-8 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 font-semibold transition-colors"
+                >
+                    {isLoading && page === 1 ? 'Scraping...' : 'Start Scraping'}
+                </button>
+
+                {products.length > 0 && (
+                    <div className="flex items-center gap-2 ml-auto">
+                        <span className="text-sm text-muted-foreground mr-2">
+                            {selectedUrls.size} selected
+                        </span>
+                        <SelectionToolbar
+                            onSelectAll={handleSelectAll}
+                            onClear={handleClearSelection}
+                            onExport={handleExportCsv}
+                            hasSelection={selectedUrls.size > 0}
+                        />
+                    </div>
+                )}
+            </div>
 
             {error && (
                 <div className="p-4 mb-8 bg-destructive/15 text-destructive rounded-lg border border-destructive/20">
@@ -135,44 +206,13 @@ export default function SupplierGodView() {
 
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8">
                 {products.map((product, index) => (
-                    <div key={`${product.url}-${index}`} className="bg-card text-card-foreground rounded-lg shadow-sm border border-border hover:shadow-md transition-shadow overflow-hidden flex flex-col h-full text-sm">
-                        <div className="aspect-square relative flex-shrink-0 bg-muted">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                                src={product.image}
-                                alt={product.title}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                    (e.target as HTMLImageElement).src = 'https://placehold.co/400?text=No+Image';
-                                }}
-                            />
-                        </div>
-                        <div className="p-3 flex flex-col flex-grow">
-                            <div className="text-xs text-muted-foreground mb-1 flex justify-between items-center">
-                                <span className="uppercase font-semibold">{product.source}</span>
-                                <span className="truncate max-w-[50%] ml-2" title={product.metadata.searchKeyword}>{product.metadata.searchKeyword}</span>
-                            </div>
-
-                            <a
-                                href={product.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="font-medium text-card-foreground line-clamp-2 hover:text-primary mb-2 leading-tight"
-                                title={product.title}
-                            >
-                                {product.title}
-                            </a>
-
-                            <div className="mt-auto space-y-1">
-                                {product.price && (
-                                    <div className="text-red-600 dark:text-red-400 font-bold">{product.price}</div>
-                                )}
-                                {product.moq && (
-                                    <div className="text-muted-foreground text-xs">Min: {product.moq}</div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
+                    <ProductCard
+                        key={`${product.url}-${index}`}
+                        product={product}
+                        isSelected={selectedUrls.has(product.url)}
+                        onToggleSelection={toggleSelection}
+                        onClick={handleCardClick}
+                    />
                 ))}
             </div>
 
@@ -193,6 +233,60 @@ export default function SupplierGodView() {
                     </button>
                 </div>
             )}
+
+            <ProductDetailSheet
+                open={isSheetOpen}
+                onOpenChange={setIsSheetOpen}
+                product={selectedProduct}
+                isLoading={isDetailLoading}
+                error={detailError}
+            />
         </div>
+    );
+}
+
+// Sub-components for cleaner internal file structure
+function GodViewInputs({ urls, setUrls, keywords, setKeywords }: any) {
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div>
+                <label className="block text-sm font-medium mb-2 text-foreground">Supplier URLs (one per line)</label>
+                <textarea
+                    className="w-full h-32 p-3 border border-input bg-background rounded-lg text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+                    placeholder="https://example.en.made-in-china.com"
+                    value={urls}
+                    onChange={(e) => setUrls(e.target.value)}
+                />
+            </div>
+            <div>
+                <label className="block text-sm font-medium mb-2 text-foreground">Keywords (one per line)</label>
+                <textarea
+                    className="w-full h-32 p-3 border border-input bg-background rounded-lg text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+                    placeholder="sofa&#10;chair"
+                    value={keywords}
+                    onChange={(e) => setKeywords(e.target.value)}
+                />
+            </div>
+        </div>
+    );
+}
+
+function SelectionToolbar({ onSelectAll, onClear, onExport, hasSelection }: any) {
+    return (
+        <>
+            <button onClick={onSelectAll} className="px-4 py-2 text-sm border border-input bg-background hover:bg-accent hover:text-accent-foreground rounded-md">
+                Select All
+            </button>
+            <button onClick={onClear} className="px-4 py-2 text-sm border border-input bg-background hover:bg-accent hover:text-accent-foreground rounded-md">
+                Clear
+            </button>
+            <button
+                onClick={onExport}
+                disabled={!hasSelection}
+                className="px-4 py-2 text-sm bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-md disabled:opacity-50"
+            >
+                Export CSV
+            </button>
+        </>
     );
 }

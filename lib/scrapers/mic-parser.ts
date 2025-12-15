@@ -156,14 +156,31 @@ export function parseProductDetail(html: string, productUrl: string): ProductDet
 
     // Get product attributes from table
     const attributes: Record<string, string> = {};
-    $('.sr-proMainInfo-baseInfo-propertyAttr table tr').each((_, row) => {
-        const $row = $(row);
-        const label = $row.find('th').text().trim().replace(/:$/, '');
-        const value = $row.find('td').text().trim();
+    let modelNo: string | undefined;
+
+    $('.sr-proMainInfo-baseInfo-propertyAttr table tr, .basic-info-list .bsc-item').each((_, el) => {
+        const $el = $(el);
+        let label = '';
+        let value = '';
+
+        if ($el.is('tr')) {
+            label = $el.find('th').text().trim().replace(/:$/, '');
+            value = $el.find('td').text().trim();
+        } else {
+            label = $el.find('.bac-item-label').text().trim().replace(/:$/, '');
+            value = $el.find('.bac-item-value').text().trim();
+        }
+
         if (label && value) {
             attributes[label] = value;
+            if (label.toLowerCase() === 'model no.') {
+                modelNo = value;
+            }
         }
     });
+
+    // Get Basic Info HTML
+    const basicInfoHtml = $('.sr-layout-block.bsc-info').html() || '';
 
     // Get all media URLs (images)
     const mediaUrls: string[] = [];
@@ -212,6 +229,8 @@ export function parseProductDetail(html: string, productUrl: string): ProductDet
         mediaUrls,
         supplierName: supplierName || undefined,
         supplierLocation: supplierLocation || undefined,
+        modelNo,
+        basicInfoHtml
     };
 }
 
