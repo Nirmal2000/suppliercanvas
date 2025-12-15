@@ -38,6 +38,8 @@ export interface ProductDetail {
     mediaUrls: string[];
     supplierName?: string;
     supplierLocation?: string;
+    modelNo?: string;
+    basicInfoHtml?: string;
 }
 
 export interface ScrapeRequest {
@@ -48,4 +50,19 @@ export interface ScrapeResponse {
     success: boolean;
     html?: string;
     error?: string;
+}
+
+export interface Product extends Omit<ProductItem, 'id' | 'imageUrl' | 'priceRange'> {
+    image: string;
+    price: string;
+    moq: string;
+    source: string;
+    metadata: {
+        searchKeyword: string;
+        supplierUrl: string;
+    };
+    modelNo?: string; // Populated after detail fetch
+    basicInfoHtml?: string;
+    attributes?: Record<string, string>;
+    mediaUrls?: string[];
 }
