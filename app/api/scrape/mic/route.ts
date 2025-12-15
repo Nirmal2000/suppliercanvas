@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { ScrapeRequest, ScrapeResponse } from '@/lib/scrapers/mic-types';
+import { getCachedHtml, setCachedHtml } from '@/lib/scrapers/firecrawl-cache';
 
 const FIRECRAWL_API_URL = 'https://api.firecrawl.dev/v2/scrape';
 const FIRECRAWL_API_KEY = 'fc-102ab0c2a1d6406696e1eb6ecdf1a7cb';
@@ -18,6 +19,16 @@ export async function POST(request: NextRequest): Promise<NextResponse<ScrapeRes
             url = `https://${url}`;
         }
 
+        // Check cache first
+        const cachedHtml = await getCachedHtml(url);
+        if (cachedHtml) {
+            return NextResponse.json({
+                success: true,
+                html: cachedHtml
+            });
+        }
+
+        // Not in cache - call Firecrawl API
         const response = await fetch(FIRECRAWL_API_URL, {
             method: 'POST',
             headers: {
@@ -50,6 +61,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<ScrapeRes
             }, { status: 500 });
         }
 
+        // Save to cache
+        await setCachedHtml(url, data.data.html);
+
         return NextResponse.json({
             success: true,
             html: data.data.html
@@ -63,3 +77,4 @@ export async function POST(request: NextRequest): Promise<NextResponse<ScrapeRes
         }, { status: 500 });
     }
 }
+
