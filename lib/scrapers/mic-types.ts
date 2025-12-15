@@ -49,3 +49,14 @@ export interface ScrapeResponse {
     html?: string;
     error?: string;
 }
+
+export interface Product extends Omit<ProductItem, 'id' | 'imageUrl' | 'priceRange'> {
+    image: string;
+    price: string;
+    moq: string;
+    source: string;
+    metadata: {
+        searchKeyword: string;
+        supplierUrl: string;
+    };
+}
